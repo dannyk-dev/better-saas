@@ -3,6 +3,11 @@
 @import "fumadocs-ui/css/neutral.css";
 @import "tw-animate-css";
 
+/* @plugin './hero.ts'; */
+@plugin "../components/ui/hero.ts";
+@source '../../node_modules/@heroui/theme/dist/**/*.{js,ts,jsx,tsx}';
+
+
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
@@ -141,14 +146,14 @@
   body {
     @apply bg-background text-foreground font-sans;
   }
-  
+
   /* Ensure consistent font rendering across platforms */
   html {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
   }
-  
+
   /* Chinese font optimization */
   :lang(zh) {
     font-family: var(--font-geist-sans), "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "WenQuanYi Micro Hei", sans-serif;

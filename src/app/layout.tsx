@@ -69,6 +69,7 @@ export default async function RootLayout({
     >
       <body>
         <script
+          // biome-ignore lint/security/noDangerouslySetInnerHtml: <explanation>
           dangerouslySetInnerHTML={{
             __html: `
               if (typeof globalThis !== 'undefined' && typeof globalThis.__name === 'undefined') {

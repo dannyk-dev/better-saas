@@ -1,7 +1,7 @@
 'use client';
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import {  CardContent, CardDescription,  CardTitle } from '@/components/ui/card';
+import { Badge, Card, CardHeader } from '@heroui/react';
 import { Code } from 'lucide-react';
 
 export function ApiUsageGuide() {
@@ -21,7 +21,7 @@ export function ApiUsageGuide() {
           <div className="space-y-4">
             <div>
               <div className='mb-2 flex items-center gap-2'>
-                <Badge variant="secondary">GET</Badge>
+                <Badge variant="flat">GET</Badge>
                 <code className='rounded bg-muted px-2 py-1 text-sm'>/api/data</code>
               </div>
               <p className='mb-3 text-muted-foreground text-sm'>
@@ -87,15 +87,15 @@ export function ApiUsageGuide() {
           <h3 className='mb-3 font-semibold text-lg'>常见错误响应</h3>
           <div className="space-y-3">
             <div>
-              <Badge variant="destructive">401</Badge>
+              <Badge variant="flat" color='danger'>401</Badge>
               <span className="ml-2 text-sm">API Key 无效或缺失</span>
             </div>
             <div>
-              <Badge variant="destructive">402</Badge>
+              <Badge variant="flat" color='danger'>402</Badge>
               <span className="ml-2 text-sm">积分不足</span>
             </div>
             <div>
-              <Badge variant="destructive">404</Badge>
+              <Badge variant="flat" color='danger'>404</Badge>
               <span className="ml-2 text-sm">请求的页面没有数据</span>
             </div>
           </div>

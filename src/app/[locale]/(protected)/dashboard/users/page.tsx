@@ -1,13 +1,14 @@
 'use client';
 
 import { AdminGuard } from '@/components/admin-guard';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import {  CardContent, CardDescription,  CardTitle } from '@/components/ui/card';
 import { UserList } from '@/components/dashboard/user-list';
 import { getUserStats, type UserStats } from '@/server/actions/user-actions';
 import { useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { Users, UserCheck, UserPlus, CreditCard } from 'lucide-react';
+import { Card, CardHeader } from '@heroui/react';
 
 export default function UsersPage() {
   const t = useTranslations('sidebar');
