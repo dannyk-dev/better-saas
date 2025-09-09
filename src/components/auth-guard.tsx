@@ -1,12 +1,13 @@
 'use client';
 
 import { LoadingSkeleton } from '@/components/loading-skeleton';
-import { 
+import {
   useAuthLoading,
   useAuthError,
   useIsAuthenticated,
-  useAuthInitialized, 
-  useRefreshSession 
+  useAuthInitialized,
+  useRefreshSession,
+  useUser,
 } from '@/store/auth-store';
 import { AlertCircle, Loader2, Lock } from 'lucide-react';
 import { useTranslations } from 'next-intl';
@@ -39,6 +40,9 @@ export function AuthGuard({
   const searchParams = useSearchParams();
   const t = useTranslations('auth');
 
+  // Access current user to inspect onboarding status
+  const user = useUser();
+
   const getCurrentPath = useCallback(() => {
     const search = searchParams.toString();
     return pathname + (search ? `?${search}` : '');
@@ -52,6 +56,22 @@ export function AuthGuard({
       router.push(loginUrl);
     }
   }, [isInitialized, isLoading, isAuthenticated, redirectTo, router, getCurrentPath]);
+
+  // Redirect authenticated users who have not completed onboarding
+  useEffect(() => {
+    if (
+      isInitialized &&
+      !isLoading &&
+      isAuthenticated &&
+      user &&
+      // Many user objects returned from Better‑Auth are plain JS objects.
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      user.hasOnboarded === false &&
+      pathname !== '/onboarding'
+    ) {
+      router.replace('/onboarding');
+    }
+  }, [isInitialized, isLoading, isAuthenticated, user, pathname, router]);
 
   if (!isInitialized || isLoading) {
     if (fallback) {
@@ -91,7 +111,7 @@ export function AuthGuard({
             <Button onClick={() => refreshSession()} className="w-full">
               {t('refreshSession')}
             </Button>
-            <Button variant="outline" onClick={() => router.push(redirectTo)} className="w-full">
+            <Button variant="bordered" onClick={() => router.push(redirectTo)} className="w-full">
               {t('goToLogin')}
             </Button>
             <Button variant="ghost" onClick={() => window.location.reload()} className="w-full">

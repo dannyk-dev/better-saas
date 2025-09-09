@@ -1,278 +1,254 @@
-"use server";
+'use server';
 
-import { auth } from '@/lib/auth/auth';
 import { headers } from 'next/headers';
+import { auth } from '@/lib/auth/auth';
 import type { ActionResult } from '@/payment/types';
+import type { User } from 'better-auth';
 
+export type OrgRole = 'member' | 'admin' | 'owner';
 /**
- * This module provides server actions for managing organizations using the
- * Better‑Auth organization plugin. Each function wraps the underlying
- * plugin calls with authentication checks and consistent return values.
- *
- * All actions return an {@link ActionResult} where `success` indicates
- * whether the operation succeeded. When successful, the result contains
- * a `data` property with the returned payload. When unsuccessful, the
- * result contains an `error` message.
+ * Helper to run a callback requiring authentication and wrap the result
+ * in an ActionResult.  If the user is not authenticated the error
+ * "UNAUTHORIZED" is returned.  If the callback throws, its message
+ * is returned as the error.
  */
+async function withAuth<T>(fn: (user: User) => Promise<T>): Promise<ActionResult<T>> {
+	const h = await headers();
+  const session = await auth.api.getSession({ headers: h });
+
+	try {
+		if (!session?.user) {
+			return { success: false, error: 'UNAUTHORIZED' } as const;
+		}
+	} catch {
+		return { success: false, error: 'UNAUTHORIZED' } as const;
+	}
+	try {
+		const data = await fn(session.user);
+		return { success: true, data } as const;
+	} catch (e: any) {
+		return { success: false, error: e?.message ?? 'UNKNOWN_ERROR' } as const;
+	}
+}
+
+// Internal utility to access the organization plugin.  Cast to any
+// because the Better‑Auth plugin surface is not included in TypeScript
+// definitions.
+// const orgClient = () => auth.api;
 
 /**
- * Retrieve all organizations that the current user belongs to.
+ * List all organizations that the current user belongs to.  Returns an
+ * array of organizations with at least `id`, `name` and optional `slug`.
+ */
+export async function listOrganizations(): Promise<ActionResult<any[]>> {
+	return withAuth(async () => {
+		const list = await auth.api.listOrganizations();
+		return list;
+	});
+}
+
+/**
+ * Alias for listOrganizations, retained for backwards compatibility.
  */
 export async function getOrganizations(): Promise<ActionResult<any[]>> {
-  try {
-    const session = await auth.api.getSession({
-      headers: await headers(),
-    });
-    if (!session?.user) {
-      return { success: false, error: 'Unauthorized' };
-    }
-    // List organizations for the authenticated user.  The organization
-    // plugin exposes a `list` method via the `organization` namespace.
-    const orgs = await (auth.api as any).organization.list();
-    return { success: true, data: orgs };
-  } catch (error) {
-    console.error('Error fetching organizations:', error);
-    return { success: false, error: 'Failed to fetch organizations' };
-  }
+	return listOrganizations();
 }
 
 /**
- * Create a new organization for the current user.
- *
- * @param name The human‑readable name of the organization
- * @param slug Optional unique slug for the organization. If omitted
- *   the backend will derive one from the name.
+ * Create a new organization.  Accepts an object with name and
+ * optional slug.  Returns the created organization.  For
+ * backwards compatibility a positional overload is exported below.
  */
-export async function createOrganization(
-  name: string,
-  slug?: string
+export async function createOrganization(input: { name: string; slug?: string }): Promise<ActionResult<any>> {
+	return withAuth(async (user) => {
+		return await auth.api.createOrganization({
+			body: {
+				name: input.name,
+				slug: input.slug ?? input.name,
+        userId: user.id,
+        keepCurrentActiveOrganization: false
+			},
+      headers: await headers()
+		});
+	});
+}
+
+// Backwards‑compatible overload for createOrganization(name, slug?)
+export async function createOrganizationLegacy(name: string, slug?: string): Promise<ActionResult<any>> {
+	return createOrganization({ name, slug });
+}
+
+/**
+ * Update an organization.  Accepts an object with organizationId and
+ * partial fields to update.  The plugin requires id and the update
+ * payload properties.
+ */
+export async function updateOrganization(input: {
+	organizationId: string;
+	name?: string;
+	slug?: string;
+}): Promise<ActionResult<any>> {
+	return withAuth(async () => {
+		const { organizationId, name, slug } = input;
+		return await auth.api.updateOrganization({ body: { organizationId, data: { name, slug } }, headers: {} });
+	});
+}
+
+// Backwards‑compatible overload for updateOrganization(id, data)
+export async function updateOrganizationLegacy(
+	id: string,
+	data: { name?: string; slug?: string }
 ): Promise<ActionResult<any>> {
-  try {
-    const session = await auth.api.getSession({
-      headers: await headers(),
-    });
-    if (!session?.user) {
-      return { success: false, error: 'Unauthorized' };
-    }
-    const organizationClient = (auth.api as any).organization;
-    const created = await organizationClient.create({ name, slug });
-    return { success: true, data: created };
-  } catch (error) {
-    console.error('Error creating organization:', error);
-    return { success: false, error: 'Failed to create organization' };
-  }
+	return updateOrganization({ organizationId: id, ...data });
 }
 
 /**
- * Update an existing organization. Only the owner or administrators of
- * the organization are allowed to perform this operation.
- *
- * @param id The identifier of the organization to update
- * @param data A partial object containing the fields to update
+ * Delete an organization.  Accepts an object with organizationId.
  */
-export async function updateOrganization(
-  id: string,
-  data: { name?: string; slug?: string }
+export async function deleteOrganization(input: {
+	organizationId: string;
+}): Promise<ActionResult<{ deleted: boolean }>> {
+	return withAuth(async () => {
+		await auth.api.deleteOrganization({ body: { organizationId: input.organizationId }, headers: {} });
+		return { deleted: true };
+	});
+}
+
+// Backwards‑compatible overload for deleteOrganization(id)
+export async function deleteOrganizationLegacy(id: string): Promise<ActionResult<{ deleted: boolean }>> {
+	return deleteOrganization({ organizationId: id });
+}
+
+/**
+ * Set the active organization for the current user.
+ */
+export async function setActiveOrganization(input: {
+	organizationId: string;
+}): Promise<ActionResult<{ active: boolean }>> {
+	return withAuth(async () => {
+		await auth.api.setActiveOrganization({ body: { organizationId: input.organizationId } });
+		return { active: true };
+	});
+}
+
+// Backwards‑compatible overload for setActiveOrganization(id)
+export async function setActiveOrganizationLegacy(id: string): Promise<ActionResult<{ active: boolean }>> {
+	return setActiveOrganization({ organizationId: id });
+}
+
+/**
+ * Invite a member to an organization.  Accepts an object with
+ * organizationId, email and optional role.
+ */
+export async function inviteMember(input: {
+	organizationId: string;
+	email: string;
+	role?: OrgRole;
+}): Promise<ActionResult<any>> {
+	return withAuth(async () => {
+		return await auth.api.createInvitation({
+			body: {
+				organizationId: input.organizationId,
+				email: input.email,
+				role: input.role ?? 'member',
+			},
+		});
+	});
+}
+
+// Backwards‑compatible overload for inviteMember(organizationId, email, role?)
+export async function inviteMemberLegacy(
+	organizationId: string,
+	email: string,
+	role?: string
 ): Promise<ActionResult<any>> {
-  try {
-    const session = await auth.api.getSession({
-      headers: await headers(),
-    });
-    if (!session?.user) {
-      return { success: false, error: 'Unauthorized' };
-    }
-    const organizationClient = (auth.api as any).organization;
-    const updated = await organizationClient.update({ id, ...data });
-    return { success: true, data: updated };
-  } catch (error) {
-    console.error('Error updating organization:', error);
-    return { success: false, error: 'Failed to update organization' };
-  }
+	return inviteMember({ organizationId, email, role });
 }
 
 /**
- * Delete an organization. The current user must be the owner of the
- * organization to perform this operation.
- *
- * @param id The identifier of the organization to delete
+ * List all members of an organization.  Accepts an object with
+ * organizationId.
  */
-export async function deleteOrganization(
-  id: string
-): Promise<ActionResult<{ deleted: boolean }>> {
-  try {
-    const session = await auth.api.getSession({
-      headers: await headers(),
-    });
-    if (!session?.user) {
-      return { success: false, error: 'Unauthorized' };
-    }
-    const organizationClient = (auth.api as any).organization;
-    await organizationClient.delete({ id });
-    return { success: true, data: { deleted: true } };
-  } catch (error) {
-    console.error('Error deleting organization:', error);
-    return { success: false, error: 'Failed to delete organization' };
-  }
+export async function listMembers(input: { organizationId: string }): Promise<ActionResult<any[]>> {
+	return withAuth(async () => {
+		const members = await auth.api.listUsers({ query: {} });
+		return members;
+	});
+}
+
+// Backwards‑compatible overload for listMembers(organizationId)
+export async function listMembersLegacy(organizationId: string): Promise<ActionResult<any[]>> {
+	return listMembers({ organizationId });
 }
 
 /**
- * Set an organization as the active context for the current user.
- * This is useful for multi‑tenant applications where actions depend
- * on the active organization.
- *
- * @param id The identifier of the organization to set as active
+ * Update a member's role in an organization.  Accepts an object with
+ * organizationId, userId and new role.
  */
-export async function setActiveOrganization(
-  id: string
-): Promise<ActionResult<{ active: boolean }>> {
-  try {
-    const session = await auth.api.getSession({
-      headers: await headers(),
-    });
-    if (!session?.user) {
-      return { success: false, error: 'Unauthorized' };
-    }
-    const organizationClient = (auth.api as any).organization;
-    await organizationClient.setActive({ id });
-    return { success: true, data: { active: true } };
-  } catch (error) {
-    console.error('Error setting active organization:', error);
-    return { success: false, error: 'Failed to set active organization' };
-  }
+export async function updateMemberRole(input: {
+	organizationId: string;
+	userId: string;
+	role: OrgRole;
+}): Promise<ActionResult<{ updated: boolean }>> {
+	return withAuth(async () => {
+		await auth.api.updateMemberRole({
+			body: {
+				organizationId: input.organizationId,
+				memberId: input.userId,
+				role: input.role,
+			},
+		});
+		return { updated: true };
+	});
 }
 
-/**
- * Invite a member to join an organization by email. Only owners or
- * administrators of the organization can send invites.
- *
- * @param organizationId The organization to which the member is invited
- * @param email The email address of the user to invite
- * @param role Optional role to assign upon acceptance (e.g. "member" or "admin")
- */
-export async function inviteMember(
-  organizationId: string,
-  email: string,
-  role?: string
-): Promise<ActionResult<any>> {
-  try {
-    const session = await auth.api.getSession({
-      headers: await headers(),
-    });
-    if (!session?.user) {
-      return { success: false, error: 'Unauthorized' };
-    }
-    const organizationClient = (auth.api as any).organization;
-    const invite = await organizationClient.inviteMember({ organizationId, email, role });
-    return { success: true, data: invite };
-  } catch (error) {
-    console.error('Error inviting member:', error);
-    return { success: false, error: 'Failed to invite member' };
-  }
-}
-
-/**
- * List all members of a given organization. Requires membership in the
- * organization.
- *
- * @param organizationId The organization whose members should be listed
- */
-export async function listMembers(
-  organizationId: string
-): Promise<ActionResult<any[]>> {
-  try {
-    const session = await auth.api.getSession({
-      headers: await headers(),
-    });
-    if (!session?.user) {
-      return { success: false, error: 'Unauthorized' };
-    }
-    const organizationClient = (auth.api as any).organization;
-    const members = await organizationClient.listMembers({ organizationId });
-    return { success: true, data: members };
-  } catch (error) {
-    console.error('Error listing members:', error);
-    return { success: false, error: 'Failed to list members' };
-  }
-}
-
-/**
- * Update the role of a member within an organization. Only owners or
- * administrators can change roles.
- *
- * @param organizationId The organization containing the member
- * @param userId The user identifier of the member
- * @param role The new role to assign
- */
-export async function updateMemberRole(
-  organizationId: string,
-  userId: string,
-  role: string
+// Backwards‑compatible overload for updateMemberRole(organizationId, userId, role)
+export async function updateMemberRoleLegacy(
+	organizationId: string,
+	userId: string,
+	role: OrgRole
 ): Promise<ActionResult<{ updated: boolean }>> {
-  try {
-    const session = await auth.api.getSession({
-      headers: await headers(),
-    });
-    if (!session?.user) {
-      return { success: false, error: 'Unauthorized' };
-    }
-    const organizationClient = (auth.api as any).organization;
-    await organizationClient.updateMemberRole({ organizationId, userId, role });
-    return { success: true, data: { updated: true } };
-  } catch (error) {
-    console.error('Error updating member role:', error);
-    return { success: false, error: 'Failed to update member role' };
-  }
+	return updateMemberRole({ organizationId, userId, role });
 }
 
 /**
- * Remove a member from an organization. Only owners or administrators
- * can remove other members.
- *
- * @param organizationId The organization from which to remove the member
- * @param userId The user identifier of the member to remove
+ * Remove a member from an organization.  Accepts an object with
+ * organizationId and userId.
  */
-export async function removeMember(
-  organizationId: string,
-  userId: string
+export async function removeMember(input: {
+	organizationId: string;
+	userId: string;
+}): Promise<ActionResult<{ removed: boolean }>> {
+	return withAuth(async () => {
+		await auth.api.removeMember({
+			body: {
+				organizationId: input.organizationId,
+				memberIdOrEmail: input.userId,
+			},
+		});
+		return { removed: true };
+	});
+}
+
+// Backwards‑compatible overload for removeMember(organizationId, userId)
+export async function removeMemberLegacy(
+	organizationId: string,
+	userId: string
 ): Promise<ActionResult<{ removed: boolean }>> {
-  try {
-    const session = await auth.api.getSession({
-      headers: await headers(),
-    });
-    if (!session?.user) {
-      return { success: false, error: 'Unauthorized' };
-    }
-    const organizationClient = (auth.api as any).organization;
-    await organizationClient.removeMember({ organizationId, userId });
-    return { success: true, data: { removed: true } };
-  } catch (error) {
-    console.error('Error removing member:', error);
-    return { success: false, error: 'Failed to remove member' };
-  }
+	return removeMember({ organizationId, userId });
 }
 
 /**
- * Leave an organization. The current user can leave any organization they
- * belong to. If the user is the sole owner, the backend should prevent
- * leaving until the organization is transferred or deleted.
- *
- * @param organizationId The organization to leave
+ * Leave an organization.  Accepts an object with organizationId.
  */
-export async function leaveOrganization(
-  organizationId: string
-): Promise<ActionResult<{ left: boolean }>> {
-  try {
-    const session = await auth.api.getSession({
-      headers: await headers(),
-    });
-    if (!session?.user) {
-      return { success: false, error: 'Unauthorized' };
-    }
-    const organizationClient = (auth.api as any).organization;
-    await organizationClient.leave({ organizationId });
-    return { success: true, data: { left: true } };
-  } catch (error) {
-    console.error('Error leaving organization:', error);
-    return { success: false, error: 'Failed to leave organization' };
-  }
+export async function leaveOrganization(input: { organizationId: string }): Promise<ActionResult<{ left: boolean }>> {
+	return withAuth(async () => {
+		await auth.api.leaveOrganization({ body: { organizationId: input.organizationId } });
+		return { left: true };
+	});
+}
+
+// Backwards‑compatible overload for leaveOrganization(organizationId)
+export async function leaveOrganizationLegacy(organizationId: string): Promise<ActionResult<{ left: boolean }>> {
+	return leaveOrganization({ organizationId });
 }

@@ -18,6 +18,9 @@ export const user = pgTable('user', {
 	banned: boolean('banned'),
 	banReason: text('ban_reason'),
 	banExpires: timestamp('ban_expires'),
+	hasOnboarded: boolean('has_onboarded')
+		.$defaultFn(() => false)
+		.notNull(),
 });
 
 export const organization = pgTable('organization', {

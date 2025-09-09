@@ -13,7 +13,7 @@ import { Button } from '@heroui/react';
 import dynamic from 'next/dynamic';
 
 // Dynamically import OrgTopbarSlot to avoid SSR issues and keep bundle size down
-const OrgTopbarSlot = dynamic(() => import('@/components/blocks/topbar/org-topbar-slot'), { ssr: false });
+// const OrgTopbarSlot = dynamic(() => import('@/components/blocks/topbar/org-topbar-slot'), { ssr: false });
 
 export function DashboardHeader() {
   const { setTheme } = useTheme();
@@ -42,7 +42,7 @@ export function DashboardHeader() {
         </DropdownMenu>
 
         {/* Organization Switcher - dynamic import on client */}
-        <OrgTopbarSlot />
+        {/* <OrgTopbarSlot /> */}
 
         {/* User Menu */}
         <UserAvatarMenu />

@@ -1,80 +1,95 @@
 "use client";
 
 import type React from 'react';
-import { createContext, useContext, useEffect, useCallback, useState } from 'react';
-import * as OrgActions from '@/server/actions/org-actions';
+import { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import {
+  listOrganizations,
+  setActiveOrganization as setActiveOrganizationAction,
+} from '@/server/actions/org-actions';
 
 /**
- * OrgContext holds the list of organizations available to the current user as
- * well as the identifier of the active organization.  Consumers can call
- * refresh() to reload the organizations from the backend and setActive() to
- * change the active organization.  The actual server updates (via
- * setActiveOrganization) are handled inside setActive().
+ * OrgProvider is a context provider that loads the current user's
+ * organizations via the Better‑Auth organization plugin and exposes
+ * helper functions for switching the active organization and
+ * refreshing the organization list.  Components can call
+ * `useOrg()` to access the list of orgs, the active org id, and
+ * functions to set or refresh the active org.
  */
+
+export type Org = { id: string; name: string; slug?: string };
+
 interface OrgContextValue {
-  organizations: any[];
+  orgs: Org[];
+  /**
+   * The id of the currently active organization.  May be null if the user
+   * belongs to no organizations.
+   */
   activeOrgId: string | null;
-  refresh: () => Promise<void>;
+  /** True while loading the organization list or changing the active org. */
+  loading: boolean;
+  /**
+   * Set the active organization.  Updates internal state only after the
+   * server action succeeds.
+   */
   setActive: (id: string) => Promise<void>;
+  /**
+   * Reload the list of organizations from the server.  When called,
+   * `loading` will be true until the request completes.
+   */
+  refresh: () => Promise<void>;
 }
 
-const OrgContext = createContext<OrgContextValue | undefined>(undefined);
+const OrgContext = createContext<OrgContextValue | null>(null);
 
 export function OrgProvider({ children }: { children: React.ReactNode }) {
-  const [organizations, setOrganizations] = useState<any[]>([]);
+  const [orgs, setOrgs] = useState<Org[]>([]);
   const [activeOrgId, setActiveOrgId] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  /**
-   * Reload the organizations from the server and update local state.  If the
-   * server marks an organization as active (e.g. via user preferences), use
-   * that as the initial activeOrgId.
-   */
-  const refresh = useCallback(async () => {
-    const result = await OrgActions.getOrganizations();
+  const refresh = async () => {
+    setLoading(true);
+    const result = await listOrganizations();
     if (result.success) {
-      setOrganizations(result.data);
-      // Attempt to detect the server's active organization by looking for
-      // a property "isActive" or similar on returned objects.  If not
-      // present, preserve the current activeOrgId.
-      const active = result.data.find((org: any) => org.isActive);
-      if (active) {
-        setActiveOrgId(active.id);
+      const list = Array.isArray(result.data) ? (result.data as Org[]) : [];
+      setOrgs(list);
+      if (!activeOrgId && list.length > 0) {
+        setActiveOrgId(list[0].id);
       }
     }
-  }, []);
+    setLoading(false);
+  };
 
-  /**
-   * Set the active organization both locally and on the server.  If the
-   * operation fails, the error is silently ignored and the local state is
-   * reverted on the next refresh() call.
-   */
-  const setActive = useCallback(async (id: string) => {
-    setActiveOrgId(id);
-    await OrgActions.setActiveOrganization(id);
-  }, []);
+  const setActive = async (id: string) => {
+    setLoading(true);
+    const result = await setActiveOrganizationAction(id);
+    if (result.success) {
+      setActiveOrgId(id);
+    }
+    setLoading(false);
+  };
 
   useEffect(() => {
-    // Load organizations on mount.  Ignore errors; the component will
-    // render without organizations if the call fails.  Consumers may call
-    // refresh() manually to retry.
-    refresh();
-  }, [refresh]);
+    // Initial load of organizations on mount
+    void refresh();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-  return (
-    <OrgContext.Provider value={{ organizations, activeOrgId, refresh, setActive }}>
-      {children}
-    </OrgContext.Provider>
+  const value = useMemo(
+    () => ({ orgs, activeOrgId, loading, setActive, refresh }),
+    [orgs, activeOrgId, loading]
   );
+
+  return <OrgContext.Provider value={value}>{children}</OrgContext.Provider>;
 }
 
 /**
- * Hook to access the organization context.  Throws if used outside of
- * OrgProvider.
+ * Custom hook to access the organization context.  Must be used
+ * within an <OrgProvider>.
  */
-export function useOrg() {
+export function useOrg(): OrgContextValue {
   const ctx = useContext(OrgContext);
   if (!ctx) {
-    throw new Error('useOrg must be used within an OrgProvider');
+    throw new Error('useOrg must be used within OrgProvider');
   }
   return ctx;
 }

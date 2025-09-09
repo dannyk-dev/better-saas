@@ -3,7 +3,7 @@
 import { ProtectedContainer } from '@/components/dashboard/protected-container';
 import { useIsAdmin } from '@/components/auth/permission-provider';
 import type { SidebarGroup } from '@/types';
-import { Coins, History, CreditCard, Files, Shield, Users, Key } from 'lucide-react';
+import { Coins, History, CreditCard, Files, Shield, Users, Key, Building } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import type { ReactNode } from 'react';
 import { useMemo } from 'react';
@@ -71,6 +71,11 @@ export function ProtectedLayoutClient({ children }: ProtectedLayoutClientProps) 
           title: t('profile'),
           href: '/settings/profile',
           icon: Users,
+        },
+        {
+          title: 'Organizations',
+          href: '/settings/organizations',
+          icon: Building,
         },
         {
           title: t('billing'),

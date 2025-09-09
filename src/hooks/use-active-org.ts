@@ -8,7 +8,8 @@ import { useOrg } from '@/components/providers/org-provider';
  * active id is set, it returns null.
  */
 export function useActiveOrg() {
-  const { organizations, activeOrgId } = useOrg();
+  const { orgs, activeOrgId } = useOrg();
   if (!activeOrgId) return null;
-  return organizations.find((org: any) => org.id === activeOrgId) || null;
+
+  return orgs.find((org: any) => org.id === activeOrgId) || null;
 }
