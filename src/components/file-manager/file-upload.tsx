@@ -1,13 +1,12 @@
 'use client';
 
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { FileImage, Upload, X } from 'lucide-react';
 import { useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { useAppConfig } from '@/hooks/use-config';
 import { useTranslations } from 'next-intl';
+import { Button, Card, CardBody as CardContent } from '@heroui/react';
 
 interface FileUploadProps {
   onUpload: (files: File[]) => void;

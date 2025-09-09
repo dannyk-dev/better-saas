@@ -4,8 +4,6 @@ import { ArrowRight, CircleCheck } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
 import { useIsAuthenticated } from '@/store/auth-store';
@@ -15,8 +13,8 @@ import { toast } from 'sonner';
 import { useTransition } from 'react';
 import { ErrorLogger } from '@/lib/logger/logger-utils';
 import { usePaymentPlans } from '@/hooks/use-config';
-import { Badge } from '@/components/ui/badge';
 import { PurchaseConfirmationDialog } from '@/components/payment/purchase-confirmation-dialog';
+import { Button, Card, CardBody as CardContent, CardFooter, CardHeader, CardHeader as CardTitle, Chip as Badge } from '@heroui/react';
 
 const pricingErrorLogger = new ErrorLogger('pricing');
 

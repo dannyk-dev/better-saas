@@ -1,17 +1,11 @@
 'use client';
 
-import { Button } from '@/components/ui/button';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 import { usePathname } from '@/i18n/navigation';
 import { Globe } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
 import { useEnabledLanguages } from '@/hooks/use-config';
+import { Button, Dropdown, DropdownItem, DropdownMenu, DropdownTrigger } from '@heroui/react';
 
 interface EnabledLanguage {
   locale: string;
@@ -50,24 +44,24 @@ export function LanguageSwitcher() {
   const currentLanguage = locales.find((lang: EnabledLanguage) => lang.locale === locale);
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="sm" className="gap-2">
+    <Dropdown>
+      <DropdownTrigger >
+        <Button variant="faded" size="sm" className="gap-2">
           <Globe className="h-4 w-4" />
           {currentLanguage?.nativeName || 'English'}
         </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
+      </DropdownTrigger>
+      <DropdownMenu  variant='faded' aria-label='Language Switcher'>
         {locales.map((lang: EnabledLanguage) => (
-          <DropdownMenuItem
+          <DropdownItem
             key={lang.locale}
-            onClick={() => handleLanguageChange(lang.locale)}
+            onPress={() => handleLanguageChange(lang.locale)}
             className={locale === lang.locale ? 'bg-accent' : ''}
           >
             {lang.nativeName}
-          </DropdownMenuItem>   
+          </DropdownItem>
         ))}
-      </DropdownMenuContent>
-    </DropdownMenu>
+      </DropdownMenu>
+    </Dropdown>
   );
 }

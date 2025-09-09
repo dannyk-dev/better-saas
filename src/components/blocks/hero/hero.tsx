@@ -1,10 +1,10 @@
+'use client'
+
 import { Star } from 'lucide-react';
 import React from 'react';
 import { useTranslations } from 'next-intl';
-
-import { Avatar, AvatarImage } from '@/components/ui/avatar';
-import { Button } from '@/components/ui/button';
-
+import { Avatar, Avatar as AvatarImage, Button } from '@heroui/react';
+import Link from 'next/link';
 interface HeroProps {
   heading?: string;
   description?: string;
@@ -68,8 +68,8 @@ const Hero = ({
           <h1 className="font-extrabold text-3xl lg:text-6xl">{finalHeading}</h1>
           <p className="text-balance text-muted-foreground lg:text-lg">{finalDescription}</p>
         </div>
-        <Button asChild size="lg" className="mt-10">
-          <a href={finalButton.url}>{finalButton.text}</a>
+        <Button href={finalButton.url} as={Link} size="lg" className="mt-10">
+          {finalButton.text}
         </Button>
         <div className="mx-auto mt-10 flex w-fit flex-col items-center gap-4 sm:flex-row">
           <span className="-space-x-3 mx-4 inline-flex items-center">

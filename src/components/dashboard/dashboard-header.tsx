@@ -1,6 +1,5 @@
 'use client';
 
-import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -10,6 +9,11 @@ import {
 import { UserAvatarMenu } from '@/components/widget/user-avatar-menu';
 import { Moon, Sun } from 'lucide-react';
 import { useTheme } from 'next-themes';
+import { Button } from '@heroui/react';
+import dynamic from 'next/dynamic';
+
+// Dynamically import OrgTopbarSlot to avoid SSR issues and keep bundle size down
+const OrgTopbarSlot = dynamic(() => import('@/components/blocks/topbar/org-topbar-slot'), { ssr: false });
 
 export function DashboardHeader() {
   const { setTheme } = useTheme();
@@ -24,7 +28,7 @@ export function DashboardHeader() {
         {/* Theme Switcher */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon">
+            <Button variant="light" size="sm">
               <Sun className="dark:-rotate-90 h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:scale-0" />
               <Moon className="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
               <span className="sr-only">Toggle theme</span>
@@ -36,6 +40,9 @@ export function DashboardHeader() {
             <DropdownMenuItem onClick={() => setTheme('system')}>System</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
+
+        {/* Organization Switcher - dynamic import on client */}
+        <OrgTopbarSlot />
 
         {/* User Menu */}
         <UserAvatarMenu />

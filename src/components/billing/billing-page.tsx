@@ -1,6 +1,5 @@
 'use client';
 
-import {  CardContent, CardDescription, CardTitle } from '@/components/ui/card';
 import { SubscriptionCard } from '@/components/payment/subscription-card';
 import { getBillingInfo } from '@/server/actions/payment/get-billing-info';
 import type { BillingInfo } from '@/server/actions/payment/get-billing-info';
@@ -10,7 +9,7 @@ import { useSearchParams } from 'next/navigation';
 import { toast } from 'sonner';
 import { ErrorLogger } from '@/lib/logger/logger-utils';
 import { syncSingleSubscription } from '@/server/actions/payment/sync-subscription-periods';
-import { Badge, Button, Card, CardHeader } from '@heroui/react';
+import { Card, CardBody as CardContent, CardBody as CardDescription, CardHeader, CardHeader as CardTitle, Chip as Badge, Button } from '@heroui/react';
 
 const billingErrorLogger = new ErrorLogger('billing-page');
 
@@ -208,9 +207,9 @@ export function BillingPage() {
         {billingInfo?.activeSubscription && (
           <div className="flex items-center gap-2">
             <Button
-              variant="bordered"
+              variant="outline"
               size="sm"
-              onPress={handleSyncSubscription}
+              onClick={handleSyncSubscription}
               disabled={syncing}
               className="flex items-center gap-2"
             >

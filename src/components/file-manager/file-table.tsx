@@ -1,7 +1,5 @@
 'use client';
 
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -24,6 +22,7 @@ import Image from 'next/image';
 import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { useLocale } from 'next-intl';
+import { Chip as Badge, Button } from '@heroui/react';
 
 interface FileTableProps {
   files: FileInfo[];

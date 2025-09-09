@@ -1,11 +1,10 @@
 'use client';
 
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Activity, Bell, CreditCard, DollarSign, Download, User, Users } from 'lucide-react';
 import { useTranslations } from 'next-intl';
+import { Button, Card, CardBody as CardContent, CardBody as CardDescription, CardHeader, CardHeader as CardTitle } from '@heroui/react';
 
 export function DashboardContent() {
   const t = useTranslations('dashboard');

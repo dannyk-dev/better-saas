@@ -1,7 +1,5 @@
 'use client';
 
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -14,6 +12,7 @@ import { useAuthLoading, useIsAuthenticated, useUser, useSignOut } from '@/store
 import { CreditCard, Home, LogOut, Settings, Shield, User } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
+import { Avatar, Avatar as AvatarFallback, Avatar as AvatarImage, Button } from '@heroui/react';
 
 export function UserAvatarMenu() {
   const router = useRouter();

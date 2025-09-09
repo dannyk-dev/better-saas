@@ -3,9 +3,9 @@
 import { Check, Copy } from 'lucide-react';
 import { useState } from 'react';
 
-import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { ErrorLogger } from '@/lib/logger/logger-utils';
+import { Button } from '@heroui/react';
 
 const codeDisplayErrorLogger = new ErrorLogger('code-display');
 

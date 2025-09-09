@@ -1,7 +1,5 @@
 'use client';
 
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { PaginationControls } from '@/components/ui/pagination';
 import { useFiles } from '@/hooks/use-files';
 import type { FileInfo } from '@/lib/files/file-service';
@@ -12,6 +10,7 @@ import { FileUpload } from './file-upload';
 import { ImagePreviewModal } from './image-preview-modal';
 import { useAppConfig } from '@/hooks/use-config';
 import { useTranslations } from 'next-intl';
+import { Button, Input } from '@heroui/react';
 
 export function FileManager() {
   const [searchQuery, setSearchQuery] = useState('');

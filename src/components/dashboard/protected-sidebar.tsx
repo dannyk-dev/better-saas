@@ -1,14 +1,12 @@
 'use client';
 
-import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 import type { ProtectedSidebarProps } from '@/types';
-import { 
-  ChevronDown, 
-  ChevronLeft, 
-  ChevronRight, 
+import {
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
   Menu,
   Users,
   Bell,
@@ -23,6 +21,7 @@ import {
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState } from 'react';
+import { Button, Tooltip  } from '@heroui/react';
 
 // Icon mapping
 const iconMap = {
@@ -84,14 +83,13 @@ export function ProtectedSidebar({ collapsed, onToggle, sidebarGroups }: Protect
             </Link>
           </div>
         )}
-        <Button variant="ghost" size="icon" onClick={onToggle} className="h-8 w-8">
+        <Button variant="ghost" size="sm" onClick={onToggle} className="h-8 w-8">
           {collapsed ? <Menu className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
         </Button>
       </div>
 
       {/* Navigation */}
       <ScrollArea className="flex-1 px-3 py-4">
-        <TooltipProvider>
           <nav className="space-y-4">
             {sidebarGroups.map((group) => {
               const isExpanded = expandedGroups.has(group.title);
@@ -101,9 +99,10 @@ export function ProtectedSidebar({ collapsed, onToggle, sidebarGroups }: Protect
                   {/* Group Header */}
                   {!collapsed && (
                     <Button
-                      variant="ghost"
+                      variant="light"
+                      color='danger'
                       className="h-8 w-full justify-between px-2 font-medium text-muted-foreground text-xs hover:text-foreground"
-                      onClick={() => toggleGroup(group.title)}
+                      onPress={() => toggleGroup(group.title)}
                     >
                       <span className="uppercase tracking-wider">{group.title}</span>
                       {isExpanded ? (
@@ -124,30 +123,35 @@ export function ProtectedSidebar({ collapsed, onToggle, sidebarGroups }: Protect
 
                         const buttonContent = (
                           <Button
-                            variant={isActive ? 'secondary' : 'ghost'}
+                            variant={isActive ? 'flat' : 'light'}
+                            color='primary'
                             className={cn(
                               'h-9 w-full justify-start',
                               collapsed ? 'px-2' : 'px-3',
                               isActive && 'bg-secondary text-secondary-foreground'
                             )}
-                            asChild
+                            as={Link}
+                            href={item.href}
                           >
-                            <Link href={item.href}>
                               <Icon className={cn('h-4 w-4', !collapsed && 'mr-3')} />
                               {!collapsed && <span className="text-sm">{item.title}</span>}
-                            </Link>
                           </Button>
                         );
 
                         if (collapsed) {
                           return (
-                            <Tooltip key={item.href} delayDuration={0}>
-                              <TooltipTrigger asChild>{buttonContent}</TooltipTrigger>
-                              <TooltipContent side="right" className="ml-2">
-                                <div className="font-medium">{group.title}</div>
-                                <div className="text-muted-foreground text-sm">{item.title}</div>
-                              </TooltipContent>
+                            <Tooltip content={<>
+                              <div className="font-medium">{group.title}</div>
+                                 <div className="text-muted-foreground text-sm">{item.title}</div>
+                            </>}>
+                              {buttonContent}
                             </Tooltip>
+                            // <Tooltip key={item.href} delayDuration={0}>
+                              // <TooltipTrigger asChild>{buttonContent}</TooltipTrigger>
+                              // <TooltipContent side="right" className="ml-2">
+
+                              // </TooltipContent>
+                            // </Tooltip>
                           );
                         }
 
@@ -159,7 +163,6 @@ export function ProtectedSidebar({ collapsed, onToggle, sidebarGroups }: Protect
               );
             })}
           </nav>
-        </TooltipProvider>
       </ScrollArea>
     </div>
   );

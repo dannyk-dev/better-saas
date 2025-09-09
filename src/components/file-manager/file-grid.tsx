@@ -1,8 +1,5 @@
 'use client';
 
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -17,6 +14,7 @@ import Image from 'next/image';
 import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { useLocale } from 'next-intl';
+import { Chip as Badge, Button, Card, CardBody as CardContent } from '@heroui/react';
 
 interface FileGridProps {
   files: FileInfo[];

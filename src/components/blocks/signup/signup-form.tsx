@@ -1,13 +1,10 @@
 'use client';
 
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
-import { 
-  useAuthLoading, 
-  useAuthError, 
+import {
+  useAuthLoading,
+  useAuthError,
   useIsAuthenticated,
   useEmailSignup,
   useClearError,
@@ -19,6 +16,8 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState, useCallback } from 'react';
 import { useTranslations } from 'next-intl';
 import { ErrorLogger } from '@/lib/logger/logger-utils';
+import { Button, Card, CardBody as CardContent,  CardHeader,  Input } from '@heroui/react';
+import { CardDescription, CardTitle } from '@/components/ui';
 
 const signupErrorLogger = new ErrorLogger('signup-form');
 
@@ -26,7 +25,7 @@ export function SignupForm({ className, ...props }: React.ComponentProps<'div'>)
   const router = useRouter();
   const searchParams = useSearchParams();
   const t = useTranslations('auth');
-  
+
   const isLoading = useAuthLoading();
   const error = useAuthError();
   const isAuthenticated = useIsAuthenticated();
@@ -57,7 +56,7 @@ export function SignupForm({ className, ...props }: React.ComponentProps<'div'>)
 
   const handleSocialLogin = async (provider: 'github' | 'google') => {
     try {
-      clearError();   
+      clearError();
       if (provider === 'github') {
         await signInWithGithub();
       } else {
@@ -97,14 +96,13 @@ export function SignupForm({ className, ...props }: React.ComponentProps<'div'>)
   return (
     <div className={cn('flex flex-col gap-6', className)} {...props}>
       <Card>
-        <CardHeader className="text-center">
+        <CardHeader className="text-center flex flex-col pb-3 gap-y-2">
           <CardTitle className="text-xl">{t('createAccount')}</CardTitle>
           <CardDescription>{t('signupWithSocial')}</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleEmailSignup} data-testid="signup-form">
             <div className="grid gap-6">
-              {/* Error message display */}
               {error && (
                 <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-600 text-sm">
                   {error}
@@ -122,9 +120,9 @@ export function SignupForm({ className, ...props }: React.ComponentProps<'div'>)
               <div className="flex flex-col gap-4">
                 <Button
                   type="button"
-                  variant="outline"
+                  variant="bordered"
                   className="w-full"
-                  onClick={() => handleSocialLogin('github')}
+                  onPress={() => handleSocialLogin('github')}
                   disabled={isLoading}
                 >
                   <svg
@@ -147,9 +145,9 @@ export function SignupForm({ className, ...props }: React.ComponentProps<'div'>)
 
                 <Button
                   type="button"
-                  variant="outline"
+                  variant="bordered"
                   className="w-full"
-                  onClick={() => handleSocialLogin('google')}
+                  onPress={() => handleSocialLogin('google')}
                   disabled={isLoading}
                 >
                   <svg

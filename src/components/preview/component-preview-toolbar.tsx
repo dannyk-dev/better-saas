@@ -3,11 +3,10 @@
 import { Code, Eye, Monitor, Moon, Smartphone, Sun, Tablet } from 'lucide-react';
 import { useTheme } from 'next-themes';
 
-import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 import type { ViewportSize } from '@/types/blocks';
+import { Button, Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@heroui/react';
 
 interface ComponentPreviewToolbarProps {
   viewport: ViewportSize;

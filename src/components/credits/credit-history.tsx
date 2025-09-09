@@ -1,13 +1,12 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { ArrowRight, Plus, Minus, RefreshCw, History, ChevronLeft, ChevronRight } from 'lucide-react';
 import { getCreditHistory } from '@/server/actions/credit-actions';
 import { useRouter } from '@/i18n/navigation';
 import { toast } from 'sonner';
 import type { CreditTransaction } from '@/lib/credits';
+import { Button, Chip as Badge } from '@heroui/react';
 
 interface CreditHistoryProps {
   limit?: number;

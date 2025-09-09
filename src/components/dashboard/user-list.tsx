@@ -1,11 +1,6 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { 
   Table, 
   TableBody, 
@@ -33,6 +28,7 @@ import {
 } from 'lucide-react';
 import { getUsers, type UserListResponse, type GetUsersOptions } from '@/server/actions/user-actions';
 import { toast } from 'sonner';
+import { Card, CardBody as CardContent, CardHeader, CardHeader as CardTitle, Button, Input, Chip as Badge, Avatar, Avatar as AvatarFallback, Avatar as AvatarImage } from '@heroui/react';
 
 export function UserList() {
   const [data, setData] = useState<UserListResponse | null>(null);

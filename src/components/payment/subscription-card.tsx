@@ -1,8 +1,5 @@
 'use client';
 
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { cancelSubscription } from '@/server/actions/payment/cancel-subscription';
 import type { PaymentRecord } from '@/payment/types';
 import { Calendar, CreditCard, AlertCircle } from 'lucide-react';
@@ -10,6 +7,7 @@ import { useTransition } from 'react';
 import { toast } from 'sonner';
 import { ErrorLogger } from '@/lib/logger/logger-utils';
 import { useI18nConfig } from '@/hooks/use-config';
+import { Button, Card, CardBody as CardContent, CardBody as CardDescription, CardFooter, CardHeader, CardHeader as CardTitle, Chip as Badge } from '@heroui/react';
 
 const subscriptionErrorLogger = new ErrorLogger('subscription-card');
 
