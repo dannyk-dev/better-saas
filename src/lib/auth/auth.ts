@@ -2,9 +2,7 @@ import { env } from '@/env';
 import db from '@/server/db';
 import { betterAuth } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
-import { admin, apiKey } from 'better-auth/plugins';
-
-
+import { admin, apiKey, organization } from 'better-auth/plugins';
 
 export const auth = betterAuth({
   database: drizzleAdapter(db, {
@@ -29,11 +27,12 @@ export const auth = betterAuth({
     updateAge: 60 * 60 * 24 * 3,
     cookieCache: {
       enabled: true,
-      maxAge: 60 * 60 
+      maxAge: 60 * 60
     },
   },
   plugins: [
     admin(),
-    apiKey()
+    apiKey(),
+    organization()
   ]
 });
