@@ -3,14 +3,12 @@
 import type React from 'react';
 import { useOrg } from '@/components/providers/org-provider';
 import { Select, SelectItem, Skeleton, type SharedSelection } from '@heroui/react';
+import { useState } from 'react';
 
-/**
- * OrgSidebarSwitcher renders a HeroUI <Select> for switching the active
- * organization in the dashboard sidebar.  It shows a loading skeleton
- * while the organization list is being fetched.
- */
+
 export default function OrgSidebarSwitcher() {
-  const { orgs, activeOrg, setActive } = useOrg();
+  const { orgs, activeOrg, setActive, refresh, isLoadingActive } = useOrg();
+  const [activeOrgId, setActiveOrgId] = useState(activeOrg?.id); // optimistic
 
   if (!orgs) {
     return <Skeleton className="h-9 w-full rounded-md" />;
@@ -19,7 +17,11 @@ export default function OrgSidebarSwitcher() {
   const handleChange = async (keys: SharedSelection) => {
     const id = Array.from(keys)[0] as string | undefined;
     if (id) {
-      await setActive(id);
+      const newId = await setActive(id);
+      if (newId) {
+        setActiveOrgId(newId);
+        refresh();
+      }
     }
   };
 
@@ -30,7 +32,8 @@ export default function OrgSidebarSwitcher() {
       className="w-full"
       variant="flat"
       label="My Orgs"
-      selectedKeys={activeOrg ? [activeOrg.id] : []}
+      isLoading={isLoadingActive}
+      selectedKeys={activeOrgId ? [activeOrgId] : []}
       onSelectionChange={(e: SharedSelection) => handleChange(e)}
     >
       {orgs.map((org) => (

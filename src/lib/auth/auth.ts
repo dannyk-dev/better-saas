@@ -1,5 +1,3 @@
-'use server';
-
 import { env } from '@/env';
 import db from '@/server/db';
 
@@ -11,14 +9,14 @@ import { createAuthMiddleware } from 'better-auth/api';
 import { Resend } from 'resend';
 
 const FEATURE_ORGS = true;
-const FEATURE_TEAMS = true;
-const FEATURE_ADMIN_RBAC = true;
+const FEATURE_TEAMS = false;
+const FEATURE_ADMIN_RBAC = false;
 const FEATURE_API_KEYS = true;
-const FEATURE_EMAIL_VERIF = true;
+const FEATURE_EMAIL_VERIF = false;
 
 const resend = env.RESEND_API_KEY ? new Resend(env.RESEND_API_KEY) : null;
 
-async function sendEmail(params: { to: string; subject: string; html?: string; text?: string }) {
+export async function sendEmail(params: { to: string; subject: string; html?: string; text?: string }) {
 	if (!resend) return;
 	await resend.emails.send({
 		from: env.RESEND_FROM ?? 'noreply@yourapp.dev',
@@ -37,16 +35,18 @@ export const auth = betterAuth({
 
 	emailAndPassword: {
 		enabled: true,
-		...(FEATURE_EMAIL_VERIF && {
-			requireEmailVerification: true,
-			async sendResetPassword({ user, url }) {
-				await sendEmail({
-					to: user.email,
-					subject: 'Reset your password',
-					text: `Reset your password: ${url}`,
-				});
-			},
-		}),
+		...(FEATURE_EMAIL_VERIF
+			? {
+					requireEmailVerification: true,
+					async sendResetPassword({ user, url }) {
+						await sendEmail({
+							to: user.email,
+							subject: 'Reset your password',
+							text: `Reset your password: ${url}`,
+						});
+					},
+			  }
+			: {}),
 	},
 
 	socialProviders: {
@@ -60,18 +60,20 @@ export const auth = betterAuth({
 		cookieCache: { enabled: true, maxAge: 60 * 60 },
 	},
 
-	...(FEATURE_EMAIL_VERIF && {
-		emailVerification: {
-			sendOnSignUp: true,
-			async sendVerificationEmail({ user, url }) {
-				await sendEmail({
-					to: user.email,
-					subject: 'Verify your email',
-					text: `Verify your email: ${url}`,
-				});
-			},
-		},
-	}),
+	...(FEATURE_EMAIL_VERIF
+		? {
+				emailVerification: {
+					sendOnSignUp: true,
+					async sendVerificationEmail({ user, url }) {
+						await sendEmail({
+							to: user.email,
+							subject: 'Verify your email',
+							text: `Verify your email: ${url}`,
+						});
+					},
+				},
+		  }
+		: {}),
 
 	hooks: {
 		after: createAuthMiddleware(async (ctx) => {

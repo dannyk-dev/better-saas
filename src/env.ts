@@ -26,8 +26,8 @@ export const env = createEnv({
     ADMIN_EMAILS: z.string().optional().default(''),
     // Cron Security
     CRON_SECRET: z.string(),
-    RESEND_API_KEY: z.string(),
-    RESEND_FROM: z.string()
+    RESEND_API_KEY: z.string().optional(),
+    RESEND_FROM: z.string().optional()
   },
 
   /**

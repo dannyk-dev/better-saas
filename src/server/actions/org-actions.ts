@@ -3,8 +3,7 @@
 import { headers } from 'next/headers';
 import { auth } from '@/lib/auth/auth';
 import type { ActionResult } from '@/payment/types';
-import { APIError, type User } from 'better-auth';
-import { authClient } from '@/lib/auth/auth-client';
+import type { User } from 'better-auth';
 
 /** Roles used in org operations */
 export type OrgRole = 'member' | 'admin' | 'owner';
@@ -112,7 +111,6 @@ export async function deleteOrganization(input: { organizationId: string }) {
 	);
 } // Docs: delete /organization/delete :contentReference[oaicite:5]{index=5}
 
-/** Set or unset active organization (pass null to unset) */
 export async function setActiveOrganization(input: { organizationId?: string | null; organizationSlug?: string }) {
 	return withAuth(async () =>
 		auth.api
@@ -124,7 +122,7 @@ export async function setActiveOrganization(input: { organizationId?: string | n
 			})
 			.then(() => ({ active: true }))
 	);
-} // Docs: setActive /organization/set-active :contentReference[oaicite:6]{index=6}
+}
 
 /* ──────────────── Invitations ──────────────── */
 
@@ -187,7 +185,6 @@ export async function listUserInvitations(input?: { organizationId?: string }) {
 	);
 }
 
-
 export interface ListMembersQuery {
 	organizationId?: string;
 	limit?: number;
@@ -202,7 +199,7 @@ export interface ListMembersQuery {
 /** List members with pagination/sorting/filtering */
 export async function listMembers(query?: ListMembersQuery) {
 	return withAuth(async () => {
-		if (!query?.organizationId) throw new APIError('BAD_REQUEST');
+		if (!query?.organizationId) return null;
 
 		const { data, success } = await getFullOrganization({
 			organizationId: query.organizationId,
@@ -212,12 +209,16 @@ export async function listMembers(query?: ListMembersQuery) {
 			return data.members;
 		}
 
-		throw new APIError('NOT_FOUND');
+		return [];
 	});
 }
 
 /** Update a member's role (string or string[]) */
-export async function updateMemberRole(input: { memberId: string; role: OrgRole | OrgRole[]; organizationId?: string }) {
+export async function updateMemberRole(input: {
+	memberId: string;
+	role: OrgRole | OrgRole[];
+	organizationId?: string;
+}) {
 	return withAuth(async () =>
 		auth.api
 			.updateMemberRole({
@@ -284,153 +285,152 @@ export async function hasPermission(input: { permissions: Record<string, string[
 	);
 }
 
-export async function createOrgRole(input: {
-	role: string;
-	permission?: Record<string, string[]>;
-	organizationId?: string;
-}) {
-	return withAuth(async () =>
-		auth.api.createOrgRole({
-			headers: await headers(),
-			body: {
-				role: input.role,
-				permission: input.permission,
-				organizationId: input.organizationId,
-			},
-		})
-	);
-}
+// export async function createOrgRole(input: {
+// 	role: string;
+// 	permission?: Record<string, string[]>;
+// 	organizationId?: string;
+// }) {
+// 	return withAuth(async () =>
+// 		auth.api.createOrgRole({
+// 			headers: await headers(),
+// 			body: {
+// 				role: input.role,
+// 				permission: input.permission,
+// 				organizationId: input.organizationId,
+// 			},
+// 		})
+// 	);
+// }
 
-export async function updateOrgRole(input: {
-	roleName?: string;
-	roleId?: string;
-	organizationId?: string;
-	data: { permission?: Record<string, string[]>; roleName?: string };
-}) {
-	return withAuth(async () =>
-		auth.api.updateOrgRole({
-			headers: await headers(),
-			body: {
-				roleName: input.roleName,
-				roleId: input.roleId,
-				organizationId: input.organizationId,
-				data: input.data,
-			},
-		})
-	);
-}
+// export async function updateOrgRole(input: {
+// 	roleName?: string;
+// 	roleId?: string;
+// 	organizationId?: string;
+// 	data: { permission?: Record<string, string[]>; roleName?: string };
+// }) {
+// 	return withAuth(async () =>
+// 		auth.api.updateOrgRole({
+// 			headers: await headers(),
+// 			body: {
+// 				roleName: input.roleName,
+// 				roleId: input.roleId,
+// 				organizationId: input.organizationId,
+// 				data: input.data,
+// 			},
+// 		})
+// 	);
+// }
 
-export async function deleteOrgRole(input: { roleName?: string; roleId?: string; organizationId?: string }) {
-	return withAuth(async () =>
-		auth.api.deleteOrgRole({
-			headers: await headers(),
-			body: {
-				roleName: input.roleName,
-				roleId: input.roleId,
-				organizationId: input.organizationId,
-			},
-		})
-	);
-}
+// export async function deleteOrgRole(input: { roleName?: string; roleId?: string; organizationId?: string }) {
+// 	return withAuth(async () =>
+// 		auth.api.deleteOrgRole({
+// 			headers: await headers(),
+// 			body: {
+// 				roleName: input.roleName,
+// 				roleId: input.roleId,
+// 				organizationId: input.organizationId,
+// 			},
+// 		})
+// 	);
+// }
 
-export async function listOrgRoles(input?: { organizationId?: string }) {
-	return withAuth(async () =>
-		auth.api.listOrgRoles({
-			headers: await headers(),
-			query: { organizationId: input?.organizationId },
-		})
-	);
-}
+// export async function listOrgRoles(input?: { organizationId?: string }) {
+// 	return withAuth(async () =>
+// 		auth.api.listOrgRoles({
+// 			headers: await headers(),
+// 			query: { organizationId: input?.organizationId },
+// 		})
+// 	);
+// }
 
-export async function getOrgRole(input: { roleName?: string; roleId?: string; organizationId?: string }) {
-	return withAuth(async () =>
-		auth.api.getOrgRole({
-			headers: await headers(),
-			query: {
-				roleName: input.roleName,
-				roleId: input.roleId,
-				organizationId: input.organizationId,
-			},
-		})
-	);
-}
+// export async function getOrgRole(input: { roleName?: string; roleId?: string; organizationId?: string }) {
+// 	return withAuth(async () =>
+// 		auth.api.getOrgRole({
+// 			headers: await headers(),
+// 			query: {
+// 				roleName: input.roleName,
+// 				roleId: input.roleId,
+// 				organizationId: input.organizationId,
+// 			},
+// 		})
+// 	);
+// }
 
+// export async function createTeam(input: { name: string; organizationId?: string }) {
+// 	return withAuth(async () =>
+// 		auth.api.createTeam({
+// 			headers: await headers(),
+// 			body: { name: input.name, organizationId: input.organizationId },
+// 		})
+// 	);
+// }
 
-export async function createTeam(input: { name: string; organizationId?: string }) {
-	return withAuth(async () =>
-		auth.api.createTeam({
-			headers: await headers(),
-			body: { name: input.name, organizationId: input.organizationId },
-		})
-	);
-}
+// export async function listTeams(input?: { organizationId?: string }) {
+// 	return withAuth(async () =>
+// 		auth.api.listOrganizationTeams({
+// 			headers: await headers(),
+// 			query: { organizationId: input?.organizationId },
+// 		})
+// 	);
+// }
 
-export async function listTeams(input?: { organizationId?: string }) {
-	return withAuth(async () =>
-		auth.api.listOrganizationTeams({
-			headers: await headers(),
-			query: { organizationId: input?.organizationId },
-		})
-	);
-}
+// export async function updateTeam(input: {
+// 	teamId: string;
+// 	data: { name?: string; organizationId?: string; createdAt?: Date; updatedAt?: Date };
+// }) {
+// 	return withAuth(async () =>
+// 		auth.api.updateTeam({
+// 			headers: await headers(),
+// 			body: { teamId: input.teamId, data: input.data },
+// 		})
+// 	);
+// }
 
-export async function updateTeam(input: {
-	teamId: string;
-	data: { name?: string; organizationId?: string; createdAt?: Date; updatedAt?: Date };
-}) {
-	return withAuth(async () =>
-		auth.api.updateTeam({
-			headers: await headers(),
-			body: { teamId: input.teamId, data: input.data },
-		})
-	);
-}
+// export async function removeTeam(input: { teamId: string; organizationId?: string }) {
+// 	return withAuth(async () =>
+// 		auth.api.removeTeam({
+// 			headers: await headers(),
+// 			body: { teamId: input.teamId, organizationId: input.organizationId },
+// 		})
+// 	);
+// }
 
-export async function removeTeam(input: { teamId: string; organizationId?: string }) {
-	return withAuth(async () =>
-		auth.api.removeTeam({
-			headers: await headers(),
-			body: { teamId: input.teamId, organizationId: input.organizationId },
-		})
-	);
-}
+// export async function setActiveTeam(input: { teamId?: string }) {
+// 	return withAuth(async () =>
+// 		auth.api.setActiveTeam({
+// 			headers: await headers(),
+// 			body: { teamId: input.teamId },
+// 		})
+// 	);
+// }
 
-export async function setActiveTeam(input: { teamId?: string }) {
-	return withAuth(async () =>
-		auth.api.setActiveTeam({
-			headers: await headers(),
-			body: { teamId: input.teamId },
-		})
-	);
-}
+// export async function listUserTeams() {
+// 	return withAuth(async () => auth.api.listUserTeams());
+// }
 
-export async function listUserTeams() {
-	return withAuth(async () => auth.api.listUserTeams());
-}
+// export async function listTeamMembers(input?: { teamId?: string }) {
+// 	return withAuth(async () =>
+// 		auth.api.listTeamMembers({
+// 			headers: await headers(),
+// 			body: { teamId: input?.teamId },
+// 		})
+// 	);
+// }
 
-export async function listTeamMembers(input?: { teamId?: string }) {
-	return withAuth(async () =>
-		auth.api.listTeamMembers({
-			headers: await headers(),
-			body: { teamId: input?.teamId },
-		})
-	);
-}
+// export async function addTeamMember(input: { teamId: string; userId: string }) {
+// 	return withAuth(async () =>
+// 		auth.api.addTeamMember({
+// 			headers: await headers(),
+// 			body: { teamId: input.teamId, userId: input.userId },
+// 		})
+// 	);
+// }
 
-export async function addTeamMember(input: { teamId: string; userId: string }) {
-	return withAuth(async () =>
-		auth.api.addTeamMember({
-			headers: await headers(),
-			body: { teamId: input.teamId, userId: input.userId },
-		})
-	);
-}
-
-export async function removeTeamMember(input: { teamId: string; userId: string }) {
-	return withAuth(async () =>
-		auth.api.removeTeamMember({
-			headers: await headers(),
-			body: { teamId: input.teamId, userId: input.userId },
-		})
-	);
-}
+// export async function removeTeamMember(input: { teamId: string; userId: string }) {
+// 	return withAuth(async () =>
+// 		auth.api.removeTeamMember({
+// 			headers: await headers(),
+// 			body: { teamId: input.teamId, userId: input.userId },
+// 		})
+// 	);
+// }

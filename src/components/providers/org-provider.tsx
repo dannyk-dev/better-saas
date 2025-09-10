@@ -25,16 +25,19 @@ interface OrgContextValue {
 	activeOrg: Org|null;
 	/** True while loading the organization list or changing the active org. */
 	loading: boolean;
+	isLoadingActive: boolean;
 	/**
 	 * Set the active organization.  Updates internal state only after the
 	 * server action succeeds.
 	 */
-	setActive: (id: string) => Promise<void>;
+	setActive: (id: string) => Promise<string|null>;
 	/**
 	 * Reload the list of organizations from the server.  When called,
 	 * `loading` will be true until the request completes.
 	 */
 	refresh: () => void;
+	refreshActive: () => void;
+	refreshOrgs: () => void;
 }
 
 const OrgContext = createContext<OrgContextValue | null>(null);
@@ -44,15 +47,20 @@ export function OrgProvider({ children }: { children: React.ReactNode }) {
 		data: activeOrg,
 		refetch: refreshActive,
 		isPending: isLoadingActiveOrgs,
+    isRefetching: isRefetchingActiveOrg
 	} = authClient.useActiveOrganization();
-	const { data, refetch: refreshOrgs, isPending: isLoadingOrgs } = authClient.useListOrganizations();
+	const { data, refetch: refreshOrgs, isPending: isLoadingOrgs, isRefetching: isRefetchingOrgList } = authClient.useListOrganizations();
+
 
 	const setActive = async (id: string) => {
-		const result = await setActiveOrganizationAction({ organizationId: id });
+		const result = await authClient.organization.setActive({ organizationId: id });
 
-		if (result.success) {
+		if (result.data) {
 			refreshActive();
+      return result.data.id;
 		}
+
+    return activeOrg?.id ?? null;
 	};
 
   const refresh = () => {
@@ -61,6 +69,7 @@ export function OrgProvider({ children }: { children: React.ReactNode }) {
   }
 
 	const isLoading = useMemo(() => isLoadingActiveOrgs || isLoadingOrgs, [isLoadingActiveOrgs, isLoadingOrgs]);
+  // const isLoadingActive =useMemo(() => isLoadingActiveOrgs || isRefetchingActiveOrg, [isLoadingActiveOrgs, isRefetchingActiveOrg]);
 
 	return (
 		<OrgContext.Provider
@@ -68,8 +77,11 @@ export function OrgProvider({ children }: { children: React.ReactNode }) {
 				orgs: data,
         activeOrg: activeOrg,
         loading: isLoading,
+        isLoadingActive: isLoadingActiveOrgs || isRefetchingActiveOrg,
         setActive,
-        refresh
+        refresh,
+        refreshActive,
+        refreshOrgs
 			}}
 		>
 			{children}
