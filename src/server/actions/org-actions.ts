@@ -3,26 +3,19 @@
 import { headers } from 'next/headers';
 import { auth } from '@/lib/auth/auth';
 import type { ActionResult } from '@/payment/types';
-import type { User } from 'better-auth';
+import { APIError, type User } from 'better-auth';
+import { authClient } from '@/lib/auth/auth-client';
 
+/** Roles used in org operations */
 export type OrgRole = 'member' | 'admin' | 'owner';
-/**
- * Helper to run a callback requiring authentication and wrap the result
- * in an ActionResult.  If the user is not authenticated the error
- * "UNAUTHORIZED" is returned.  If the callback throws, its message
- * is returned as the error.
- */
+
+/** Utility: run an authenticated callback and wrap in ActionResult */
 async function withAuth<T>(fn: (user: User) => Promise<T>): Promise<ActionResult<T>> {
 	const h = await headers();
-  const session = await auth.api.getSession({ headers: h });
+	const session = await auth.api.getSession({ headers: h }).catch(() => null);
 
-	try {
-		if (!session?.user) {
-			return { success: false, error: 'UNAUTHORIZED' } as const;
-		}
-	} catch {
-		return { success: false, error: 'UNAUTHORIZED' } as const;
-	}
+	if (!session?.user) return { success: false, error: 'UNAUTHORIZED' } as const;
+
 	try {
 		const data = await fn(session.user);
 		return { success: true, data } as const;
@@ -31,225 +24,413 @@ async function withAuth<T>(fn: (user: User) => Promise<T>): Promise<ActionResult
 	}
 }
 
-// Internal utility to access the organization plugin.  Cast to any
-// because the Better‑Auth plugin surface is not included in TypeScript
-// definitions.
-// const orgClient = () => auth.api;
+/* ──────────────── Organizations ──────────────── */
 
-/**
- * List all organizations that the current user belongs to.  Returns an
- * array of organizations with at least `id`, `name` and optional `slug`.
- */
-export async function listOrganizations(): Promise<ActionResult<any[]>> {
-	return withAuth(async () => {
-		const list = await auth.api.listOrganizations();
-    console.log(list)
-		return list;
-	});
+/** List organizations for current user */
+export async function listOrganizations() {
+	return withAuth(async () => auth.api.listOrganizations());
+} // Docs: list() /organization/list :contentReference[oaicite:0]{index=0}
+
+export async function getFullOrganization(input?: {
+	organizationId?: string;
+	organizationSlug?: string;
+	membersLimit?: number;
+}) {
+	return withAuth(async () =>
+		auth.api.getFullOrganization({
+			headers: await headers(),
+			query: {
+				organizationId: input?.organizationId,
+				organizationSlug: input?.organizationSlug,
+			},
+		})
+	);
 }
 
-/**
- * Alias for listOrganizations, retained for backwards compatibility.
- */
-export async function getOrganizations(): Promise<ActionResult<any[]>> {
-	return listOrganizations();
-}
+export async function checkOrganizationSlug(input: { slug: string }) {
+	return withAuth(async () =>
+		auth.api.checkOrganizationSlug({
+			body: { slug: input.slug },
+		})
+	);
+} // Docs: checkSlug /organization/check-slug :contentReference[oaicite:2]{index=2}
 
-/**
- * Create a new organization.  Accepts an object with name and
- * optional slug.  Returns the created organization.  For
- * backwards compatibility a positional overload is exported below.
- */
-export async function createOrganization(input: { name: string; slug?: string }): Promise<ActionResult<any>> {
-	return withAuth(async (user) => {
-		return await auth.api.createOrganization({
+/** Create organization (server can optionally specify userId) */
+export async function createOrganization(input: {
+	name: string;
+	slug: string;
+	logo?: string;
+	metadata?: Record<string, object>;
+	keepCurrentActiveOrganization?: boolean;
+	userId?: string;
+}) {
+	return withAuth(async (user) =>
+		auth.api.createOrganization({
+			headers: await headers(),
 			body: {
 				name: input.name,
-				slug: input.slug ?? input.name,
-        userId: user.id,
-        keepCurrentActiveOrganization: false
+				slug: input.slug,
+				logo: input.logo,
+				metadata: input.metadata,
+				userId: input.userId ?? user.id,
+				keepCurrentActiveOrganization: !!input.keepCurrentActiveOrganization,
 			},
-      headers: await headers()
-		});
-	});
-}
+		})
+	);
+} // Docs: create /organization/create :contentReference[oaicite:3]{index=3}
 
-// Backwards‑compatible overload for createOrganization(name, slug?)
-export async function createOrganizationLegacy(name: string, slug?: string): Promise<ActionResult<any>> {
-	return createOrganization({ name, slug });
-}
-
-/**
- * Update an organization.  Accepts an object with organizationId and
- * partial fields to update.  The plugin requires id and the update
- * payload properties.
- */
+/** Update organization */
 export async function updateOrganization(input: {
-	organizationId: string;
-	name?: string;
-	slug?: string;
-}): Promise<ActionResult<any>> {
-	return withAuth(async () => {
-		const { organizationId, name, slug } = input;
-		return await auth.api.updateOrganization({ body: { organizationId, data: { name, slug } }, headers: {} });
-	});
-}
+	organizationId?: string;
+	data: {
+		name?: string | undefined;
+		slug?: string | undefined;
+		logo?: string | undefined;
+		metadata?: Record<string, object> | undefined;
+	};
+}) {
+	return withAuth(async () =>
+		auth.api.updateOrganization({
+			headers: await headers(),
+			body: {
+				organizationId: input.organizationId,
+				data: input.data,
+			},
+		})
+	);
+} // Docs: update /organization/update :contentReference[oaicite:4]{index=4}
 
-// Backwards‑compatible overload for updateOrganization(id, data)
-export async function updateOrganizationLegacy(
-	id: string,
-	data: { name?: string; slug?: string }
-): Promise<ActionResult<any>> {
-	return updateOrganization({ organizationId: id, ...data });
-}
+/** Delete organization */
+export async function deleteOrganization(input: { organizationId: string }) {
+	return withAuth(async () =>
+		auth.api
+			.deleteOrganization({
+				headers: await headers(),
+				body: { organizationId: input.organizationId },
+			})
+			.then(() => ({ deleted: true }))
+	);
+} // Docs: delete /organization/delete :contentReference[oaicite:5]{index=5}
 
-/**
- * Delete an organization.  Accepts an object with organizationId.
- */
-export async function deleteOrganization(input: {
-	organizationId: string;
-}): Promise<ActionResult<{ deleted: boolean }>> {
-	return withAuth(async () => {
-		await auth.api.deleteOrganization({ body: { organizationId: input.organizationId }, headers: {} });
-		return { deleted: true };
-	});
-}
+/** Set or unset active organization (pass null to unset) */
+export async function setActiveOrganization(input: { organizationId?: string | null; organizationSlug?: string }) {
+	return withAuth(async () =>
+		auth.api
+			.setActiveOrganization({
+				body: {
+					organizationId: input.organizationId ?? null,
+					organizationSlug: input.organizationSlug,
+				},
+			})
+			.then(() => ({ active: true }))
+	);
+} // Docs: setActive /organization/set-active :contentReference[oaicite:6]{index=6}
 
-// Backwards‑compatible overload for deleteOrganization(id)
-export async function deleteOrganizationLegacy(id: string): Promise<ActionResult<{ deleted: boolean }>> {
-	return deleteOrganization({ organizationId: id });
-}
+/* ──────────────── Invitations ──────────────── */
 
-/**
- * Set the active organization for the current user.
- */
-export async function setActiveOrganization(input: {
-	organizationId: string;
-}): Promise<ActionResult<{ active: boolean }>> {
-	return withAuth(async () => {
-		await auth.api.setActiveOrganization({ body: { organizationId: input.organizationId }, headers: await headers() });
-		return { active: true };
-	});
-}
-
-// Backwards‑compatible overload for setActiveOrganization(id)
-export async function setActiveOrganizationLegacy(id: string): Promise<ActionResult<{ active: boolean }>> {
-	return setActiveOrganization({ organizationId: id });
-}
-
-/**
- * Invite a member to an organization.  Accepts an object with
- * organizationId, email and optional role.
- */
+/** Invite a user by email; optional resend and teamId */
 export async function inviteMember(input: {
-	organizationId: string;
 	email: string;
-	role?: OrgRole;
-}): Promise<ActionResult<any>> {
-	return withAuth(async () => {
-		return await auth.api.createInvitation({
+	role: OrgRole | OrgRole[];
+	organizationId?: string;
+	resend?: boolean;
+	teamId?: string;
+}) {
+	return withAuth(async () =>
+		auth.api.createInvitation({
 			body: {
-				organizationId: input.organizationId,
 				email: input.email,
-				role: input.role ?? 'member',
-			},
-		});
-	});
-}
-
-// Backwards‑compatible overload for inviteMember(organizationId, email, role?)
-export async function inviteMemberLegacy(
-	organizationId: string,
-	email: string,
-	role?: string
-): Promise<ActionResult<any>> {
-	return inviteMember({ organizationId, email, role });
-}
-
-/**
- * List all members of an organization.  Accepts an object with
- * organizationId.
- */
-export async function listMembers(input: { organizationId: string }): Promise<ActionResult<any[]>> {
-	return withAuth(async () => {
-		const members = await auth.api.listUsers({ query: {} });
-		return members;
-	});
-}
-
-// Backwards‑compatible overload for listMembers(organizationId)
-export async function listMembersLegacy(organizationId: string): Promise<ActionResult<any[]>> {
-	return listMembers({ organizationId });
-}
-
-/**
- * Update a member's role in an organization.  Accepts an object with
- * organizationId, userId and new role.
- */
-export async function updateMemberRole(input: {
-	organizationId: string;
-	userId: string;
-	role: OrgRole;
-}): Promise<ActionResult<{ updated: boolean }>> {
-	return withAuth(async () => {
-		await auth.api.updateMemberRole({
-			body: {
-				organizationId: input.organizationId,
-				memberId: input.userId,
 				role: input.role,
-			},
-		});
-		return { updated: true };
-	});
-}
-
-// Backwards‑compatible overload for updateMemberRole(organizationId, userId, role)
-export async function updateMemberRoleLegacy(
-	organizationId: string,
-	userId: string,
-	role: OrgRole
-): Promise<ActionResult<{ updated: boolean }>> {
-	return updateMemberRole({ organizationId, userId, role });
-}
-
-/**
- * Remove a member from an organization.  Accepts an object with
- * organizationId and userId.
- */
-export async function removeMember(input: {
-	organizationId: string;
-	userId: string;
-}): Promise<ActionResult<{ removed: boolean }>> {
-	return withAuth(async () => {
-		await auth.api.removeMember({
-			body: {
 				organizationId: input.organizationId,
-				memberIdOrEmail: input.userId,
+				resend: input.resend,
+				// teamId: input.teamId,
 			},
-		});
-		return { removed: true };
-	});
+		})
+	);
 }
 
-// Backwards‑compatible overload for removeMember(organizationId, userId)
-export async function removeMemberLegacy(
-	organizationId: string,
-	userId: string
-): Promise<ActionResult<{ removed: boolean }>> {
-	return removeMember({ organizationId, userId });
+export async function acceptInvitation(input: { invitationId: string }) {
+	return withAuth(async () => auth.api.acceptInvitation({ body: { invitationId: input.invitationId } }));
 }
 
-/**
- * Leave an organization.  Accepts an object with organizationId.
- */
-export async function leaveOrganization(input: { organizationId: string }): Promise<ActionResult<{ left: boolean }>> {
+/** Reject invitation */
+export async function rejectInvitation(input: { invitationId: string }) {
+	return withAuth(async () => auth.api.rejectInvitation({ body: { invitationId: input.invitationId } }));
+}
+
+export async function cancelInvitation(input: { invitationId: string }) {
+	return withAuth(async () => auth.api.cancelInvitation({ body: { invitationId: input.invitationId } }));
+}
+
+export async function getInvitation(input: { id: string }) {
+	return withAuth(async () =>
+		auth.api.getInvitation({
+			headers: await headers(),
+			query: { id: input.id },
+		})
+	);
+}
+
+export async function listInvitations(input?: { organizationId?: string }) {
+	return withAuth(async () =>
+		auth.api.listInvitations({
+			query: { organizationId: input?.organizationId },
+		})
+	);
+}
+
+export async function listUserInvitations(input?: { organizationId?: string }) {
+	return withAuth(async () =>
+		auth.api.listInvitations({
+			query: input?.organizationId ? { organizationId: input.organizationId } : undefined,
+		})
+	);
+}
+
+
+export interface ListMembersQuery {
+	organizationId?: string;
+	limit?: number;
+	offset?: number;
+	sortBy?: string;
+	sortDirection?: 'asc' | 'desc';
+	filterField?: string;
+	filterOperator?: 'eq' | 'ne' | 'gt' | 'gte' | 'lt' | 'lte' | 'in' | 'nin' | 'contains';
+	filterValue?: string;
+}
+
+/** List members with pagination/sorting/filtering */
+export async function listMembers(query?: ListMembersQuery) {
 	return withAuth(async () => {
-		await auth.api.leaveOrganization({ body: { organizationId: input.organizationId } });
-		return { left: true };
+		if (!query?.organizationId) throw new APIError('BAD_REQUEST');
+
+		const { data, success } = await getFullOrganization({
+			organizationId: query.organizationId,
+		});
+
+		if (success && data) {
+			return data.members;
+		}
+
+		throw new APIError('NOT_FOUND');
 	});
 }
 
-// Backwards‑compatible overload for leaveOrganization(organizationId)
-export async function leaveOrganizationLegacy(organizationId: string): Promise<ActionResult<{ left: boolean }>> {
-	return leaveOrganization({ organizationId });
+/** Update a member's role (string or string[]) */
+export async function updateMemberRole(input: { memberId: string; role: OrgRole | OrgRole[]; organizationId?: string }) {
+	return withAuth(async () =>
+		auth.api
+			.updateMemberRole({
+				body: {
+					memberId: input.memberId,
+					role: input.role,
+					organizationId: input.organizationId,
+				},
+			})
+			.then(() => ({ updated: true }))
+	);
+}
+
+export async function removeMember(input: { memberIdOrEmail: string; organizationId?: string }) {
+	return withAuth(async () =>
+		auth.api
+			.removeMember({
+				body: {
+					memberIdOrEmail: input.memberIdOrEmail,
+					organizationId: input.organizationId,
+				},
+			})
+			.then(() => ({ removed: true }))
+	);
+}
+
+export async function addMember(input: {
+	userId: string;
+	role: OrgRole | OrgRole[];
+	organizationId?: string;
+	teamId?: string;
+}) {
+	return withAuth(async () =>
+		auth.api.addMember({
+			body: {
+				userId: input.userId,
+				role: input.role,
+				organizationId: input.organizationId,
+			},
+		})
+	);
+}
+
+export async function getActiveMember() {
+	return withAuth(async () => auth.api.getActiveMember({ headers: await headers() }));
+}
+
+export async function leaveOrganization(input: { organizationId: string }) {
+	return withAuth(async () =>
+		auth.api
+			.leaveOrganization({
+				body: { organizationId: input.organizationId },
+			})
+			.then(() => ({ left: true }))
+	);
+}
+
+export async function hasPermission(input: { permissions: Record<string, string[]> }) {
+	return withAuth(async () =>
+		auth.api.hasPermission({
+			headers: await headers(),
+			body: { permissions: input.permissions },
+		})
+	);
+}
+
+export async function createOrgRole(input: {
+	role: string;
+	permission?: Record<string, string[]>;
+	organizationId?: string;
+}) {
+	return withAuth(async () =>
+		auth.api.createOrgRole({
+			headers: await headers(),
+			body: {
+				role: input.role,
+				permission: input.permission,
+				organizationId: input.organizationId,
+			},
+		})
+	);
+}
+
+export async function updateOrgRole(input: {
+	roleName?: string;
+	roleId?: string;
+	organizationId?: string;
+	data: { permission?: Record<string, string[]>; roleName?: string };
+}) {
+	return withAuth(async () =>
+		auth.api.updateOrgRole({
+			headers: await headers(),
+			body: {
+				roleName: input.roleName,
+				roleId: input.roleId,
+				organizationId: input.organizationId,
+				data: input.data,
+			},
+		})
+	);
+}
+
+export async function deleteOrgRole(input: { roleName?: string; roleId?: string; organizationId?: string }) {
+	return withAuth(async () =>
+		auth.api.deleteOrgRole({
+			headers: await headers(),
+			body: {
+				roleName: input.roleName,
+				roleId: input.roleId,
+				organizationId: input.organizationId,
+			},
+		})
+	);
+}
+
+export async function listOrgRoles(input?: { organizationId?: string }) {
+	return withAuth(async () =>
+		auth.api.listOrgRoles({
+			headers: await headers(),
+			query: { organizationId: input?.organizationId },
+		})
+	);
+}
+
+export async function getOrgRole(input: { roleName?: string; roleId?: string; organizationId?: string }) {
+	return withAuth(async () =>
+		auth.api.getOrgRole({
+			headers: await headers(),
+			query: {
+				roleName: input.roleName,
+				roleId: input.roleId,
+				organizationId: input.organizationId,
+			},
+		})
+	);
+}
+
+
+export async function createTeam(input: { name: string; organizationId?: string }) {
+	return withAuth(async () =>
+		auth.api.createTeam({
+			headers: await headers(),
+			body: { name: input.name, organizationId: input.organizationId },
+		})
+	);
+}
+
+export async function listTeams(input?: { organizationId?: string }) {
+	return withAuth(async () =>
+		auth.api.listOrganizationTeams({
+			headers: await headers(),
+			query: { organizationId: input?.organizationId },
+		})
+	);
+}
+
+export async function updateTeam(input: {
+	teamId: string;
+	data: { name?: string; organizationId?: string; createdAt?: Date; updatedAt?: Date };
+}) {
+	return withAuth(async () =>
+		auth.api.updateTeam({
+			headers: await headers(),
+			body: { teamId: input.teamId, data: input.data },
+		})
+	);
+}
+
+export async function removeTeam(input: { teamId: string; organizationId?: string }) {
+	return withAuth(async () =>
+		auth.api.removeTeam({
+			headers: await headers(),
+			body: { teamId: input.teamId, organizationId: input.organizationId },
+		})
+	);
+}
+
+export async function setActiveTeam(input: { teamId?: string }) {
+	return withAuth(async () =>
+		auth.api.setActiveTeam({
+			headers: await headers(),
+			body: { teamId: input.teamId },
+		})
+	);
+}
+
+export async function listUserTeams() {
+	return withAuth(async () => auth.api.listUserTeams());
+}
+
+export async function listTeamMembers(input?: { teamId?: string }) {
+	return withAuth(async () =>
+		auth.api.listTeamMembers({
+			headers: await headers(),
+			body: { teamId: input?.teamId },
+		})
+	);
+}
+
+export async function addTeamMember(input: { teamId: string; userId: string }) {
+	return withAuth(async () =>
+		auth.api.addTeamMember({
+			headers: await headers(),
+			body: { teamId: input.teamId, userId: input.userId },
+		})
+	);
+}
+
+export async function removeTeamMember(input: { teamId: string; userId: string }) {
+	return withAuth(async () =>
+		auth.api.removeTeamMember({
+			headers: await headers(),
+			body: { teamId: input.teamId, userId: input.userId },
+		})
+	);
 }
