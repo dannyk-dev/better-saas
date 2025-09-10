@@ -129,6 +129,7 @@ export function ProfileContent({ organization }: { organization?: Organization |
 									label={t('language.label')}
 									description={t('language.description')}
 									variant='faded'
+									size='sm'
 									selectedKeys={[selectedLanguage]}
 									onChange={(e) => setSelectedLanguage(e.target.value)}
 								>
@@ -147,11 +148,13 @@ export function ProfileContent({ organization }: { organization?: Organization |
 							<Input
 								value={formData.name}
 								variant='faded'
+								size='sm'
 								onValueChange={(e) => setFormData((prev) => ({ ...prev, name: e }))}
 								label={t('name.title')}
 							/>
 							<div className='flex flex-col gap-y-2 w-full'>
 								<Input
+									size='sm'
 									type='email'
 									value={formData.email}
 									variant='faded'
@@ -175,8 +178,7 @@ export function ProfileContent({ organization }: { organization?: Organization |
 									</Chip>
 								)}
 							</div>
-              {JSON.stringify(organization?.role)}
-							<Select variant='faded' label='Role' selectedKeys={[organization?.role ?? 'all']} disabled>
+							<Select size='sm' variant='faded' label='Role' selectedKeys={[organization?.role ?? 'all']} disabled>
 								{orgRoleMap.map((role) => (
 									<SelectItem key={role.key}>{role.label}</SelectItem>
 								))}

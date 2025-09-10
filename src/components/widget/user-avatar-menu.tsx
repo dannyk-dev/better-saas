@@ -50,8 +50,8 @@ export function UserAvatarMenu() {
 				<Avatar showFallback src={user?.image || undefined} alt={user.name || user.email} />
 			</DropdownTrigger>
 			<DropdownMenu variant='faded' aria-label='Profile'>
-				<DropdownSection title='Signed in as'>
-					<DropdownItem key='header' className=' gap-2' unselectable='on'>
+				<DropdownSection>
+					<DropdownItem key='header' className='flex flex-col gap-2' unselectable='on'>
 						<p className='font-semibold text-sm leading-none'>{user.name || t('user')}</p>
 						<p className='text-muted-foreground text-xs leading-none'>{user.email}</p>
 					</DropdownItem>

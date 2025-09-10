@@ -1,38 +1,17 @@
 'use client';
 
 import type React from 'react';
-import { createContext, useContext, useEffect, useMemo, useState } from 'react';
-import { listOrganizations, setActiveOrganization as setActiveOrganizationAction } from '@/server/actions/org-actions';
+import { createContext, useContext,  useMemo,} from 'react';
 import { authClient } from '@/lib/auth/auth-client';
 
-/**
- * OrgProvider is a context provider that loads the current user's
- * organizations via the Better‑Auth organization plugin and exposes
- * helper functions for switching the active organization and
- * refreshing the organization list.  Components can call
- * `useOrg()` to access the list of orgs, the active org id, and
- * functions to set or refresh the active org.
- */
 
 export type Org = { id: string; name: string; slug?: string };
 
 interface OrgContextValue {
-	/**
-	 * The id of the currently active organization.  May be null if the user
-	 * belongs to no organizations.
-	 */
-	activeOrg: Org|null;
-	/** True while loading the organization list or changing the active org. */
+
+	activeOrg: Org | null;
 	isLoadingActive: boolean;
-	/**
-	 * Set the active organization.  Updates internal state only after the
-	 * server action succeeds.
-	 */
-	setActive: (id: string) => Promise<string|null>;
-	/**
-	 * Reload the list of organizations from the server.  When called,
-	 * `loading` will be true until the request completes.
-	 */
+	setActive: (id: string) => Promise<string | null>;
 	refresh: () => void;
 	refreshActive: () => void;
 }
@@ -44,38 +23,32 @@ export function OrgProvider({ children }: { children: React.ReactNode }) {
 		data: activeOrg,
 		refetch: refreshActive,
 		isPending: isLoadingActiveOrgs,
-    isRefetching: isRefetchingActiveOrg
+		isRefetching: isRefetchingActiveOrg,
 	} = authClient.useActiveOrganization();
-	// const orgs = authClient.organization.getFullOrganization();
-
 
 	const setActive = async (id: string) => {
 		const result = await authClient.organization.setActive({ organizationId: id });
 
 		if (result.data) {
-			refreshActive();
-      return result.data.id;
+			return result.data.id;
 		}
 
-    return activeOrg?.id ?? null;
+		return activeOrg?.id ?? null;
 	};
 
-  const refresh = () => {
-    // refreshOrgs();
-    refreshActive();
-  }
+	const refresh = () => {
+		refreshActive();
+	};
 
-	const isLoading = useMemo(() => isLoadingActiveOrgs , [isLoadingActiveOrgs ]);
-  // const isLoadingActive =useMemo(() => isLoadingActiveOrgs || isRefetchingActiveOrg, [isLoadingActiveOrgs, isRefetchingActiveOrg]);
 
 	return (
 		<OrgContext.Provider
 			value={{
-        activeOrg: activeOrg,
-        isLoadingActive: isLoadingActiveOrgs || isRefetchingActiveOrg,
-        setActive,
-        refresh,
-        refreshActive,
+				activeOrg: activeOrg,
+				isLoadingActive: isLoadingActiveOrgs || isRefetchingActiveOrg,
+				setActive,
+				refresh,
+				refreshActive,
 			}}
 		>
 			{children}
@@ -83,14 +56,11 @@ export function OrgProvider({ children }: { children: React.ReactNode }) {
 	);
 }
 
-/**
- * Custom hook to access the organization context.  Must be used
- * within an <OrgProvider>.
- */
 export function useOrg(): OrgContextValue {
 	const ctx = useContext(OrgContext);
 	if (!ctx) {
 		throw new Error('useOrg must be used within OrgProvider');
 	}
+
 	return ctx;
 }

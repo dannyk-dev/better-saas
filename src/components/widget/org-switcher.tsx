@@ -21,7 +21,6 @@ export default function OrgSidebarSwitcher() {
 			const newId = await setActive(id);
 			if (newId) {
 				setActiveOrgId(newId);
-				refresh();
 			}
 		}
 	};
