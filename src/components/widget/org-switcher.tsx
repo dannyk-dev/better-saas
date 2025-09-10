@@ -10,7 +10,7 @@ import { Select, SelectItem, Skeleton, type SharedSelection } from '@heroui/reac
  * while the organization list is being fetched.
  */
 export default function OrgSidebarSwitcher() {
-  const { orgs, activeOrgId, setActive } = useOrg();
+  const { orgs, activeOrg, setActive } = useOrg();
 
   if (!orgs) {
     return <Skeleton className="h-9 w-full rounded-md" />;
@@ -30,7 +30,7 @@ export default function OrgSidebarSwitcher() {
       className="w-full"
       variant="flat"
       label="My Orgs"
-      selectedKeys={activeOrgId ? [activeOrgId] : []}
+      selectedKeys={activeOrg ? [activeOrg.id] : []}
       onSelectionChange={(e: SharedSelection) => handleChange(e)}
     >
       {orgs.map((org) => (

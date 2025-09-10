@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import { useOrg } from '@/components/providers/org-provider';
+import { useOrg, type Org } from '@/components/providers/org-provider';
 
 /**
  * useActiveOrg returns the full organization object corresponding to the
@@ -8,8 +8,8 @@ import { useOrg } from '@/components/providers/org-provider';
  * active id is set, it returns null.
  */
 export function useActiveOrg() {
-  const { orgs, activeOrgId } = useOrg();
-  if (!activeOrgId) return null;
+	const { orgs, activeOrg } = useOrg();
+	if (!activeOrg || !orgs) return null;
 
-  return orgs.find((org: any) => org.id === activeOrgId) || null;
+	return orgs.find((org: Org) => org.id === activeOrg.id) || null;
 }

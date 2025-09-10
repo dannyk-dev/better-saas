@@ -43,6 +43,7 @@ async function withAuth<T>(fn: (user: User) => Promise<T>): Promise<ActionResult
 export async function listOrganizations(): Promise<ActionResult<any[]>> {
 	return withAuth(async () => {
 		const list = await auth.api.listOrganizations();
+    console.log(list)
 		return list;
 	});
 }
@@ -126,7 +127,7 @@ export async function setActiveOrganization(input: {
 	organizationId: string;
 }): Promise<ActionResult<{ active: boolean }>> {
 	return withAuth(async () => {
-		await auth.api.setActiveOrganization({ body: { organizationId: input.organizationId } });
+		await auth.api.setActiveOrganization({ body: { organizationId: input.organizationId }, headers: await headers() });
 		return { active: true };
 	});
 }
