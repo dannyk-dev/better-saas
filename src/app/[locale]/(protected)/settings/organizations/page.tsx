@@ -16,6 +16,7 @@ import {
 } from '@heroui/react';
 import { createOrganization, updateOrganization, deleteOrganization } from '@/server/actions/org-actions';
 import { useOrg } from '@/components/providers/org-provider';
+import { authClient } from '@/lib/auth/auth-client';
 
 /**
  * SettingsOrganizationsPage provides a CRUD interface for organizations.
@@ -24,14 +25,14 @@ import { useOrg } from '@/components/providers/org-provider';
  * refreshed automatically via the `OrgProvider`.
  */
 export default function SettingsOrganizationsPage() {
-	const { orgs, refresh } = useOrg();
 	const [creating, setCreating] = useState(false);
 	const [name, setName] = useState('');
+	const { data: orgs, refetch: refresh } = authClient.useListOrganizations();
 
 	const handleCreate = async () => {
 		if (!name.trim()) return;
 		setCreating(true);
-		const result = await createOrganization({ name });
+		const result = await createOrganization({ name, slug: name });
 		if (result.success) {
 			setName('');
 			refresh();
@@ -41,7 +42,7 @@ export default function SettingsOrganizationsPage() {
 
 	const handleRename = async (id: string, newName: string) => {
 		if (!newName.trim()) return;
-		await updateOrganization({ organizationId: id, name: newName });
+		await updateOrganization({ organizationId: id, data: { name: newName } });
 		refresh();
 	};
 
@@ -73,9 +74,7 @@ export default function SettingsOrganizationsPage() {
 						</TableHeader>
 						<TableBody>
 							{!orgs ? (
-								<>
-                  no data
-                </>
+								<>no data</>
 							) : (
 								orgs.map((o) => (
 									<TableRow key={o.id}>

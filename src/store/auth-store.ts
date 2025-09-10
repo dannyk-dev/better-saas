@@ -321,7 +321,7 @@ export const useAuthStore = create<AuthState>()(
             if (session.data) {
               const user = session.data.user;
               const isNewUser = !previousUser || previousUser.id !== user.id;
-              
+
               set({
                 user,
                 isAuthenticated: true,

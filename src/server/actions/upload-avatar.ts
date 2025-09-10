@@ -12,7 +12,7 @@ const avatarErrorLogger = new ErrorLogger('upload-avatar');
 export async function uploadAvatarAction(formData: FormData) {
   let session: { user?: User } | null = null;
   let file: File | null = null;
-  
+
   try {
     session = await auth.api.getSession({
       headers: await headers(),
@@ -52,9 +52,9 @@ export async function uploadAvatarAction(formData: FormData) {
       fileSize: file?.size,
       fileType: file?.type,
     });
-    
+
     throw new Error(
       error instanceof Error ? error.message : await getErrorMessage('fileUploadFailed')
     );
   }
-} 
+}

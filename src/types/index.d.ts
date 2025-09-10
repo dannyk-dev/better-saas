@@ -355,4 +355,9 @@ declare module 'better-auth/types' {
     banExpires?: Date | null;
     hasOnboarded: boolean;
   }
+
+  interface session {
+    activeOrganizationId: string;
+    user: User;
+  }
 }

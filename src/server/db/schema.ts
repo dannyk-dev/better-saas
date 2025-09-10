@@ -70,7 +70,9 @@ export const session = pgTable('session', {
 		.notNull()
 		.references(() => user.id, { onDelete: 'cascade' }),
 	impersonatedBy: text('impersonated_by'),
-	activeOrganizationId: text('active_organization_id'),
+	activeOrganizationId: text('active_organization_id')
+		.notNull()
+		.references(() => organization.id, { onDelete: 'no action' }),
 });
 
 export const account = pgTable('account', {

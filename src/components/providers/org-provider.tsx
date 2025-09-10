@@ -17,14 +17,12 @@ import { authClient } from '@/lib/auth/auth-client';
 export type Org = { id: string; name: string; slug?: string };
 
 interface OrgContextValue {
-	orgs: Org[]|null;
 	/**
 	 * The id of the currently active organization.  May be null if the user
 	 * belongs to no organizations.
 	 */
 	activeOrg: Org|null;
 	/** True while loading the organization list or changing the active org. */
-	loading: boolean;
 	isLoadingActive: boolean;
 	/**
 	 * Set the active organization.  Updates internal state only after the
@@ -37,7 +35,6 @@ interface OrgContextValue {
 	 */
 	refresh: () => void;
 	refreshActive: () => void;
-	refreshOrgs: () => void;
 }
 
 const OrgContext = createContext<OrgContextValue | null>(null);
@@ -49,7 +46,7 @@ export function OrgProvider({ children }: { children: React.ReactNode }) {
 		isPending: isLoadingActiveOrgs,
     isRefetching: isRefetchingActiveOrg
 	} = authClient.useActiveOrganization();
-	const { data, refetch: refreshOrgs, isPending: isLoadingOrgs, isRefetching: isRefetchingOrgList } = authClient.useListOrganizations();
+	// const orgs = authClient.organization.getFullOrganization();
 
 
 	const setActive = async (id: string) => {
@@ -64,24 +61,21 @@ export function OrgProvider({ children }: { children: React.ReactNode }) {
 	};
 
   const refresh = () => {
-    refreshOrgs();
+    // refreshOrgs();
     refreshActive();
   }
 
-	const isLoading = useMemo(() => isLoadingActiveOrgs || isLoadingOrgs, [isLoadingActiveOrgs, isLoadingOrgs]);
+	const isLoading = useMemo(() => isLoadingActiveOrgs , [isLoadingActiveOrgs ]);
   // const isLoadingActive =useMemo(() => isLoadingActiveOrgs || isRefetchingActiveOrg, [isLoadingActiveOrgs, isRefetchingActiveOrg]);
 
 	return (
 		<OrgContext.Provider
 			value={{
-				orgs: data,
         activeOrg: activeOrg,
-        loading: isLoading,
         isLoadingActive: isLoadingActiveOrgs || isRefetchingActiveOrg,
         setActive,
         refresh,
         refreshActive,
-        refreshOrgs
 			}}
 		>
 			{children}

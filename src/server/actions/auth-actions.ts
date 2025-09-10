@@ -2,6 +2,7 @@
 
 import { auth } from '@/lib/auth/auth';
 import { isAdmin } from '@/lib/auth/permissions';
+import type { User } from 'better-auth/types';
 import { headers } from 'next/headers';
 
 /**
@@ -20,7 +21,7 @@ export async function getUserAdminStatus(): Promise<boolean> {
       return false;
     }
 
-    return isAdmin(session.user);
+    return isAdmin(session.user as User);
   } catch (error) {
     // Only log the error type and message, not the full error object
     console.error('Error getting user admin status:', {

@@ -18,7 +18,6 @@ export function useProfile(): UseProfileReturn {
   const [isUpdatingName, setIsUpdatingName] = useState(false);
   const [isUpdatingAvatar, setIsUpdatingAvatar] = useState(false);
 
-  // Initialize form from user data
   useEffect(() => {
     if (user) {
       setFormData({
