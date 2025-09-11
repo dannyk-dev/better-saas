@@ -1,4 +1,5 @@
 import type { PaymentInterval } from '@/payment/types';
+import type { Session } from 'better-auth';
 
 export interface AppConfig {
   app: {
@@ -356,8 +357,8 @@ declare module 'better-auth/types' {
     hasOnboarded: boolean;
   }
 
-  interface session {
-    activeOrganizationId: string;
+  interface session  {
+    activeOrganizationId: string|null;
     user: User;
   }
 }

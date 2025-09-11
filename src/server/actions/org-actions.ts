@@ -4,6 +4,9 @@ import { headers } from 'next/headers';
 import { auth } from '@/lib/auth/auth';
 import type { ActionResult } from '@/payment/types';
 import type { User } from 'better-auth';
+import db from '@/server/db';
+import { and, eq } from 'drizzle-orm';
+import { member } from '@/server/db/schema';
 
 /** Roles used in org operations */
 export type OrgRole = 'member' | 'admin' | 'owner';
@@ -426,11 +429,17 @@ export async function hasPermission(input: { permissions: Record<string, string[
 // 	);
 // }
 
-// export async function removeTeamMember(input: { teamId: string; userId: string }) {
-// 	return withAuth(async () =>
-// 		auth.api.removeTeamMember({
-// 			headers: await headers(),
-// 			body: { teamId: input.teamId, userId: input.userId },
-// 		})
-// 	);
-// }
+export async function getActiveOrganization(userId: string) {
+  const userMember = await db.query.member.findFirst({
+    where: and(eq(member.userId, userId), eq(member.role, "owner")),
+    with: {
+      organization: true,
+    },
+  });
+
+  if (!userMember?.organization) {
+    throw new Error("No active organization found");
+  }
+
+  return userMember.organization;
+}

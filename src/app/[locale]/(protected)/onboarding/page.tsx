@@ -4,6 +4,7 @@ import React, { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button, Card, CardBody, CardHeader, Input, Progress } from '@heroui/react';
 import { completeOnboarding } from '@/server/actions/onboarding-actions';
+import type { TOnboardingSchema } from '@/types/schemas/onboarding';
 
 /**
  * A step in the onboarding flow.  Each entry defines a key to use
@@ -13,13 +14,18 @@ import { completeOnboarding } from '@/server/actions/onboarding-actions';
 const steps: { key: string; title: string; fields: string[] }[] = [
 	{ key: 'profile', title: 'Your profile', fields: ['fullName', 'title'] },
 	{ key: 'organization', title: 'Organization', fields: ['orgName', 'orgSize'] },
-	{ key: 'preferences', title: 'Preferences', fields: ['timezone', 'notifications'] },
+	// { key: 'preferences', title: 'Preferences', fields: ['timezone', 'notifications'] },
 ];
 
 export default function OnboardingPage() {
 	const router = useRouter();
 	const [stepIndex, setStepIndex] = useState(0);
-	const [values, setValues] = useState<Record<string, string>>({});
+	const [values, setValues] = useState<TOnboardingSchema>({
+    fullName: '',
+    orgName: '',
+    orgSize: '',
+    title: ''
+  });
 	const [busy, setBusy] = useState(false);
 
 	const current = useMemo(() => steps?.[stepIndex] || steps[0], [stepIndex]);
@@ -39,7 +45,7 @@ export default function OnboardingPage() {
 
 	const handleSkip = async () => {
 		setBusy(true);
-		await completeOnboarding({ skipped: true });
+		await completeOnboarding(null, true);
 
 		setBusy(false);
 		router.replace('/');

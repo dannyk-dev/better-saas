@@ -7,6 +7,8 @@ import { admin as adminPlugin, apiKey, organization } from 'better-auth/plugins'
 
 import { createAuthMiddleware } from 'better-auth/api';
 import { Resend } from 'resend';
+import { completeOnboarding, defaultSetup } from '@/server/actions/onboarding-actions';
+import { createOrganization } from '@/server/actions/org-actions';
 
 const FEATURE_ORGS = true;
 const FEATURE_TEAMS = false;
@@ -47,6 +49,15 @@ export const auth = betterAuth({
 					},
 			  }
 			: {}),
+	},
+	databaseHooks: {
+		user: {
+      create: {
+        before: async (user) => {
+          await defaultSetup(user.id);
+        }
+      }
+    }
 	},
 
 	socialProviders: {
@@ -115,8 +126,6 @@ export const auth = betterAuth({
 			? [
 					organization({
 						...(FEATURE_TEAMS ? { teams: { enabled: true } } : {}),
-
-						// ...(FEATURE_DYNAMIC_ROLES ? { roles: { allowDynamic: true } } : {}),
 					}),
 			  ]
 			: []),
