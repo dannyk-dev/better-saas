@@ -357,7 +357,7 @@ declare module 'better-auth/types' {
     hasOnboarded?: boolean;
   }
 
-  interface session  {
+  interface session {
     activeOrganizationId: string|null;
     user: User;
   }

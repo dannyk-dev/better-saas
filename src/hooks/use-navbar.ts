@@ -8,6 +8,8 @@ import { useTranslations } from 'next-intl';
 import type { UseNavbarReturn, LogoConfig, AuthConfig, MenuItem } from '@/types/navbar';
 import type { NavbarMenuItem } from '@/types';
 import type { JSX } from 'react';
+import { authClient } from '@/lib/auth/auth-client';
+import { useSession } from '@/hooks/use-session';
 
 // Icon mapping function
 const getIconComponent = (iconName?: string): JSX.Element | undefined => {
@@ -49,9 +51,11 @@ export function useNavbar(): UseNavbarReturn {
   const locale = (params?.locale as string) || 'en';
   const t = useTranslations('navbar');
 
-  const isAuthenticated = useIsAuthenticated();
-  const isLoading = useAuthLoading();
-  const isInitialized = useAuthInitialized();
+  // const isAuthenticated = useIsAuthenticated();
+  // const isLoading = useAuthLoading();
+  // const isInitialized = useAuthInitialized();
+  const { isAuthenticated, isLoading, isInitialized } = useSession();
+
 
   // Get navbar configuration
   const config = useNavbarConfig();
@@ -124,4 +128,4 @@ export function useNavbar(): UseNavbarReturn {
     isInitialized,
     handlePricingClick,
   };
-} 
+}

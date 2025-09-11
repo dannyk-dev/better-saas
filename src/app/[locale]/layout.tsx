@@ -9,10 +9,13 @@ import { routing } from '@/i18n/routing';
 import { NextIntlClientProvider, hasLocale } from 'next-intl';
 import { getMessages, setRequestLocale } from 'next-intl/server';
 import { notFound } from 'next/navigation';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 export function generateStaticParams() {
 	return routing.locales.map((locale) => ({ locale }));
 }
+
+const queryClient = new QueryClient();
 
 export default async function LocaleLayout({
 	children,
@@ -27,19 +30,22 @@ export default async function LocaleLayout({
 	}
 	setRequestLocale(locale);
 	const messages = await getMessages();
+
 	return (
 		// <ThemeProvider>
-		<HeroUIProvider>
-			<ThemeProvider>
-				<AuthProvider>
-					<OrgProvider>
-						<NextIntlClientProvider messages={messages} locale={locale}>
-							<main className='text-foreground bg-background'>{children}</main>
-						</NextIntlClientProvider>
-					</OrgProvider>
-				</AuthProvider>
-			</ThemeProvider>
-		</HeroUIProvider>
+		<QueryClientProvider client={queryClient}>
+			<HeroUIProvider>
+				<ThemeProvider>
+					<AuthProvider>
+						<OrgProvider>
+							<NextIntlClientProvider messages={messages} locale={locale}>
+								<main className='text-foreground bg-background'>{children}</main>
+							</NextIntlClientProvider>
+						</OrgProvider>
+					</AuthProvider>
+				</ThemeProvider>
+			</HeroUIProvider>
+		</QueryClientProvider>
 		// </ThemeProvider>
 	);
 }

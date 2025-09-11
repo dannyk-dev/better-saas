@@ -1,15 +1,16 @@
 import 'server-only'
 
-import { router } from '@/routers'
+// import { router } from '@/routers'
 import { createRouterClient } from '@orpc/server'
 import { headers } from 'next/headers'
+import { appRouter } from '@/server/orpc/index'
 
 /**
  * This is part of the Optimize SSR setup.
  *
  * @see {@link https://orpc.unnoq.com/docs/adapters/next#optimize-ssr}
  */
-globalThis.$client = createRouterClient(router, {
+globalThis.$client = createRouterClient(appRouter, {
   /**
    * Provide initial context if needed.
    *

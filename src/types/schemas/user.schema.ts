@@ -25,3 +25,4 @@ export const userInitializeCreditSchema = z.object({
 
 export type TUserIdSchema = z.infer<typeof userIdSchema>;
 export type TUserCreditAccount = z.infer<typeof userCreditAccountSchema>;
+export type TDefaultInitializedCreditSchema = z.infer<typeof userInitializeCreditSchema>

@@ -51,7 +51,7 @@ export async function getCreditBalance(): Promise<ActionResult<GetCreditBalanceR
     }
 
     const account = await creditService.getOrCreateCreditAccount(session.user.id);
-    
+
     return {
       success: true,
       data: {
@@ -92,7 +92,7 @@ export async function getCreditHistory(
       limit,
       offset
     );
-    
+
     return {
       success: true,
       data: transactions,
@@ -128,7 +128,7 @@ export async function getQuotaUsage(): Promise<ActionResult<GetQuotaUsageRespons
 
     // Get user's current subscription to determine limits
     const subscription = await paymentRepository.findActiveSubscriptionByUserId(session.user.id);
-    
+
     // Get actual usage from database
     const usageRecords = await db.select({
       service: userQuotaUsage.service,
@@ -142,11 +142,11 @@ export async function getQuotaUsage(): Promise<ActionResult<GetQuotaUsageRespons
     // Extract usage data
     const apiCallUsage = usageRecords.find(record => record.service === 'api_call')?.usedAmount || 0;
     const storageUsage = usageRecords.find(record => record.service === 'storage')?.usedAmount || 0;
-    
+
     // Determine limits based on subscription
     const baseApiCallLimit = creditsConfig.freeUser.apiCall.freeQuotaCalls;
     const baseStorageLimit = creditsConfig.freeUser.storage.freeQuotaGB * 1024 * 1024 * 1024; // Convert GB to bytes
-    
+
     let apiCallLimit = baseApiCallLimit;
     let storageLimit = baseStorageLimit;
     const isApiUnlimited = false;
@@ -167,7 +167,7 @@ export async function getQuotaUsage(): Promise<ActionResult<GetQuotaUsageRespons
           break;
       }
     }
-    
+
     return {
       success: true,
       data: {
@@ -217,7 +217,7 @@ export async function grantCreditsToUser(
     // Note: The user type from better-auth might not have role by default
     const userWithRole = session.user as typeof session.user & { role?: string };
     const isAdmin = userWithRole.role === 'admin';
-    
+
     if (!isAdmin) {
       return {
         success: false,
@@ -243,7 +243,7 @@ export async function grantCreditsToUser(
         grantedAt: new Date().toISOString(),
       },
     });
-    
+
     return {
       success: true,
       data: transaction,
@@ -306,7 +306,7 @@ export async function spendCredits(
         timestamp: new Date().toISOString(),
       },
     });
-    
+
     return {
       success: true,
       data: transaction,

@@ -1,11 +1,11 @@
 import { auth } from '@/lib/auth/auth'
 // import type { User } from '@/schemas/user'
 import { ORPCError, os } from '@orpc/server'
-import type { User } from 'better-auth/types';
+import type { Session, User } from 'better-auth/types';
 import { headers } from 'next/headers'
 
 export const requiredAuthMiddleware = os
-  .$context<{ session?: { user?: User } }>()
+  .$context<{ session?: Session }>()
   .middleware(async ({ context, next }) => {
     /**
      * Why we should ?? here?

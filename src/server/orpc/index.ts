@@ -1,7 +1,9 @@
-import { lazy, os } from '@orpc/server';
+import authRouter from '@/server/orpc/routers/auth.router';
+import { lazy, os, unlazyRouter } from '@orpc/server';
 
-export const appRouter = os.router({
+const appRouter = os.router({
   auth: lazy(() => import('@/server/orpc/routers/auth.router')),
 });
+
 
 export type AppRouter = typeof appRouter;

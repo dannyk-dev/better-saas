@@ -3,6 +3,7 @@ import { z } from "zod/v4";
 export const signUpSchema = z.object({
   email: z.string().check(z.email()),
   password: z.string().check(z.minLength(8), z.maxLength(12)),
+  confirm: z.string().check(z.minLength(8), z.maxLength(12)),
   name: z.string().check(z.minLength(4))
 });
 
@@ -13,7 +14,8 @@ export const signInSchema = z.object({
 
 export const userSchema = z.object({
   id: z.string(),
-  name: z.string().check(z.email()),
+  name: z.string(),
+  email: z.string().check(z.email()),
   emailVerified: z.boolean(),
   image: z.string().nullable().optional(),
   createdAt: z.date(),
