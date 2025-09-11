@@ -1,4 +1,4 @@
-import { router } from '@/server/routers'
+import { router } from '@/server/orpc/routers'
 import { onError } from '@orpc/server'
 import { BatchHandlerPlugin } from '@orpc/server/plugins'
 import { RPCHandler } from '@orpc/server/fetch'

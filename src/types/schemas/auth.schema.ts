@@ -21,10 +21,29 @@ export const userSchema = z.object({
   role: z.string().optional().nullable(),
   banned: z.boolean().nullable().optional(),
   banReason: z.string().nullable().optional(),
-  hasOnboarded: z.boolean()
+  hasOnboarded: z.boolean().optional()
 });
 
+export const UpdateUserSchema = z.object({
+	name: z.string().min(1).max(100).optional(),
+	image: z.string().url().optional(),
+});
+
+export const sessionSchema = z.object({
+  id: z.string(),
+  expiresAt: z.nullable(z.date()),
+  token: z.string(),
+  createdAt: z.date(),
+  updatedAt: z.date(),
+  ipAddress: z.string().optional().nullable(),
+  userAgent: z.string().optional().nullable(),
+  userId: z.string(),
+  impersonatedBy: z.string().nullable().optional(),
+  activeOrganizationId: z.string().nullable().optional(),
+  user: z.object(userSchema).optional()
+})
 
 export type TSignupSchema = z.infer<typeof signUpSchema>;
 export type TLoginSchema = z.infer<typeof signInSchema>;
 export type TUserSchema = z.infer<typeof userSchema>;
+export type TSessionSchema = z.infer<typeof sessionSchema>;

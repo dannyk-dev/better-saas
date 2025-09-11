@@ -354,7 +354,7 @@ declare module 'better-auth/types' {
     banned?: boolean | null;
     banReason?: string | null;
     banExpires?: Date | null;
-    hasOnboarded: boolean;
+    hasOnboarded?: boolean;
   }
 
   interface session  {
