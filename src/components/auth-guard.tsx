@@ -111,10 +111,10 @@ export function AuthGuard({
             <Button onClick={() => refreshSession()} className="w-full">
               {t('refreshSession')}
             </Button>
-            <Button variant="bordered" onClick={() => router.push(redirectTo)} className="w-full">
+            <Button variant="bordered" onPress={() => router.push(redirectTo)} className="w-full">
               {t('goToLogin')}
             </Button>
-            <Button variant="ghost" onClick={() => window.location.reload()} className="w-full">
+            <Button variant="ghost" onPress={() => window.location.reload()} className="w-full">
               {t('retry')}
             </Button>
           </CardContent>
