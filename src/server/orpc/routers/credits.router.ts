@@ -3,20 +3,13 @@ import { creditService } from '@/lib/credits';
 // import type { creditService } from "@/lib/credits";
 import { quotaService } from '@/lib/quota/quota-service';
 import { authed } from '@/server/orpc';
+import { creditsContract, creditsProtected } from '@/server/orpc/contracts/credits.contract';
 import { createResponseSchema } from '@/types/schemas';
 import { userIdSchema, userInitializeCreditSchema } from '@/types/schemas/user.schema';
 import { ORPCError } from '@orpc/client';
 
-export const initializeUsersCredits = authed
-	.route({
-		method: 'POST',
-		path: '/api/credits/initialize',
-		summary: 'SAAS credits',
-		tags: ['Authentication', 'Subscription', 'Stripe'],
-	})
-	.input(userIdSchema)
-	.output(createResponseSchema(userInitializeCreditSchema))
-	.handler(async ({ input, context }) => {
+const creditsRouter = creditsContract.router({
+	initializeForUser: creditsProtected.initializeForUser.handler(async ({ input, context }) => {
 		const { id } = context.user;
 
 		if (input.userId !== id) {
@@ -103,4 +96,7 @@ export const initializeUsersCredits = authed
 			},
 			success: true,
 		};
-	});
+	}).callable(),
+});
+
+export default creditsRouter;

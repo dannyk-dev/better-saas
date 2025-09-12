@@ -51,10 +51,9 @@ export function useNavbar(): UseNavbarReturn {
   const locale = (params?.locale as string) || 'en';
   const t = useTranslations('navbar');
 
-  // const isAuthenticated = useIsAuthenticated();
-  // const isLoading = useAuthLoading();
-  // const isInitialized = useAuthInitialized();
-  const { isAuthenticated, isLoading, isInitialized } = useSession();
+  const isAuthenticated = useIsAuthenticated();
+  const isLoading = useAuthLoading();
+  const isInitialized = useAuthInitialized();
 
 
   // Get navbar configuration

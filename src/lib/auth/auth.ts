@@ -3,12 +3,14 @@ import db from '@/server/db';
 
 import { betterAuth } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
-import { admin as adminPlugin, apiKey, organization } from 'better-auth/plugins';
+import { admin as adminPlugin, apiKey, memberSchema, organization } from 'better-auth/plugins';
 
 import { createAuthMiddleware } from 'better-auth/api';
 import { Resend } from 'resend';
 import { completeOnboarding, defaultSetup } from '@/server/actions/onboarding-actions';
 import { createOrganization } from '@/server/actions/org-actions';
+import { eq } from 'drizzle-orm';
+import { member } from '@/server/db/schema';
 
 const FEATURE_ORGS = true;
 const FEATURE_TEAMS = false;
@@ -51,14 +53,27 @@ export const auth = betterAuth({
 			: {}),
 	},
 	databaseHooks: {
-		user: {
-      create: {
-        before: async (user) => {
-          await defaultSetup(user.id);
-        }
-      }
-    }
+		session: {
+			create: {
+				before: async (session) => {
+					const memberQuery = await db
+						.select()
+						.from(member)
+						.where(eq(member.userId, session.id ?? ''))
+						.limit(1)
+						.execute();
+
+					return {
+						data: {
+							...session,
+							...(memberQuery[0]?.organizationId && { activeOrganizationId: memberQuery[0].organizationId }),
+						},
+					};
+				},
+			},
+		},
 	},
+
 
 	socialProviders: {
 		github: { clientId: env.GITHUB_CLIENT_ID, clientSecret: env.GITHUB_CLIENT_SECRET },

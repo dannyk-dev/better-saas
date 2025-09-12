@@ -1,9 +1,9 @@
-import type { RouterClient } from '@orpc/server';
+import { createActionableClient, type RouterClient } from '@orpc/server';
 import { createORPCClient } from '@orpc/client';
 import { RPCLink } from '@orpc/client/fetch';
 import { createRouterUtils } from '@orpc/tanstack-query';
 import { BatchLinkPlugin } from '@orpc/client/plugins';
-import type { appRouter } from '@/server/orpc/index';
+import  {appRouter, type AppRouter}  from '@/server/orpc/index';
 
 /**
  * This is part of the Optimize SSR setup.
@@ -11,7 +11,7 @@ import type { appRouter } from '@/server/orpc/index';
  * @see {@link https://orpc.unnoq.com/docs/adapters/next#optimize-ssr}
  */
 declare global {
-	var $client: RouterClient<typeof appRouter> | undefined;
+	var $client: RouterClient<AppRouter> | undefined;
 }
 
 const link = new RPCLink({
@@ -28,6 +28,6 @@ const link = new RPCLink({
 	],
 });
 
-export const client: RouterClient<typeof appRouter> = globalThis.$client ?? createORPCClient(link);
+export const client: RouterClient<AppRouter> = globalThis.$client ?? createORPCClient(link);
 
 export const orpc = createRouterUtils(client);

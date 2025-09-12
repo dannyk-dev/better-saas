@@ -3,6 +3,7 @@ import type { User } from 'better-auth/types';
 import { create } from 'zustand';
 import { createJSONStorage, persist, subscribeWithSelector } from 'zustand/middleware';
 import { ErrorLogger } from '@/lib/logger/logger-utils';
+import { client } from '@/lib/orpc/orpc';
 
 const authErrorLogger = new ErrorLogger('auth-store');
 
@@ -174,9 +175,7 @@ export const useAuthStore = create<AuthState>()(
                 lastUpdated: Date.now(),
               });
 
-              // Initialize user credits after successful registration
-              await initializeUserCredits(user.id);
-
+              await client.credits.initializeForUser({ userId: user.id });
               return { success: true };
             }
             set({ isLoading: false });

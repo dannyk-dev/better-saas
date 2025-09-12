@@ -2,6 +2,9 @@ import * as z from 'zod/v4';
 import { sessionSchema, signInSchema, signUpSchema, UpdateUserSchema, userSchema } from '@/types/schemas/auth.schema';
 import { ApiResponse } from '@/types/schemas';
 import { oc, type InferContractRouterOutputs } from '@orpc/contract';
+import { implement } from '@orpc/server';
+import { dbProviderMiddleware } from '@/middlewares/db';
+import { requiredAuthMiddleware } from '@/middlewares/auth';
 
 export const AuthContract = {
 	signUp: oc
@@ -42,3 +45,7 @@ export const AuthContract = {
 } as const;
 
 export type TAuthContractOutput = InferContractRouterOutputs<typeof AuthContract>;
+
+export const authContract = implement(AuthContract);
+export const authPub = authContract.use(dbProviderMiddleware);
+export const authProtected = authPub.use(requiredAuthMiddleware);

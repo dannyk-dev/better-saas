@@ -1,31 +1,29 @@
 import { auth } from '@/lib/auth/auth';
 import { creditService } from '@/lib/credits';
-import { AuthContract, type TAuthContractOutput } from '@/server/orpc/contracts/auth.contract';
+import { pub } from '@/server/orpc';
+import { authContract, AuthContract, authProtected, authPub, type TAuthContractOutput } from '@/server/orpc/contracts/auth.contract';
 import { implement } from '@orpc/server';
 import type { User } from 'better-auth/types';
 import { headers } from 'next/headers';
 
-const os = implement(AuthContract);
 
-const authRouter = os.router({
-	signUp: os.signUp
+const authRouter = authContract.router({
+	signUp: authPub.signUp
 		.handler(async ({ input }) => {
 			const res = await auth.api.signUpEmail({ body: input, headers: await headers() });
 			await creditService.initializeCredits(res.user.id);
 
 			return { success: true, data: res.user };
-		})
-		.callable()
-		.actionable(),
+		}).actionable(),
 
-	signIn: os.signIn
+	signIn: authPub.signIn
 		.handler(async ({ input }) => {
 			const res = await auth.api.signInEmail({ body: input, headers: await headers() });
 			return { success: true, data: res.user as User };
 		})
 		.actionable(),
 
-	signOut: os.signOut
+	signOut: authProtected.signOut
 		.handler(async () => {
 			await auth.api.signOut({ headers: await headers() });
 			return { success: true, data: { ok: true } };
