@@ -4,6 +4,7 @@ import 'server-only'
 import { createRouterClient } from '@orpc/server'
 import { headers } from 'next/headers'
 import { appRouter } from '@/server/orpc/index'
+import { createContext } from '@/server/orpc/context'
 
 /**
  * This is part of the Optimize SSR setup.
@@ -18,7 +19,5 @@ globalThis.$client = createRouterClient(appRouter, {
    * only include context that's safe to reuse globally.
    * For per-request context, use middleware context or pass a function as the initial context.
    */
-  context: async () => ({
-    headers: await headers(), // provide headers if initial context required
-  }),
+  context: createContext()
 })

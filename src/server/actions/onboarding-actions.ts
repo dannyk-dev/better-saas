@@ -1,81 +1,80 @@
 'use server';
 
-import { headers } from 'next/headers';
-import { auth } from '@/lib/auth/auth';
-import type { ActionResult } from '@/payment/types';
-import db from '@/server/db';
-import { user, session as sessionTable } from '@/server/db/schema';
 import { eq } from 'drizzle-orm';
-import { onboardingSchema, type TOnboardingSchema } from '@/types/schemas/onboarding';
-import * as z from 'zod';
+import { onboardingSchema, type TOnboarding } from '@/types/schemas/onboarding.schema';
+import db from '@/server/db';
+import { user as userTbl, session as sessionTbl } from '@/server/db/schema';
+import { auth } from '@/lib/auth/auth';
+import { headers } from 'next/headers';
 import { createOrganization } from '@/server/actions/org-actions';
-import type { session } from 'better-auth/types';
-// import { Session } from 'better-auth/types';
+import { authActionClient } from '@/server/action-client';
 
-export async function completeOnboarding(
-	data: TOnboardingSchema|null,
-	skipped?: boolean
-): Promise<ActionResult<{ ok: true }>> {
-	const h = await headers();
+const slugify = (s: string) =>
+	s
+		.toLowerCase()
+		.trim()
+		.replace(/[^a-z0-9]+/g, '-')
+		.replace(/^-+|-+$/g, '');
 
-	try {
-		const session = await auth.api.getSession({ headers: h });
-		if (!session?.user) {
-			return { success: false, error: 'UNAUTHORIZED' };
-		}
+export const completeOnboarding = authActionClient
+	.metadata({ actionName: 'completeOnboarding' })
+	.inputSchema(onboardingSchema)
+	.action(async ({ parsedInput, ctx }) => {
+		await ctx.db
+			.update(userTbl)
+			.set({
+				hasOnboarded: true,
+				name: parsedInput.fullName,
+			})
+			.where(eq(userTbl.id, ctx.user.id));
 
-		if (skipped || !data) {
-			return await defaultSetup(session.user.id);
-		}
-
-		const payload = onboardingSchema.safeParse(data);
-		if (payload.error) {
-			return {
-				success: false,
-				error: payload.error.message,
-			};
-		}
-
-		await db.update(user).set({ hasOnboarded: true }).where(eq(user.id, session.user.id));
-		const defaultOrg = await createOrganization({
-			name: payload.data.orgName,
-			userId: session.user.id,
-			slug: payload.data.orgName,
+		const org = await createOrganization({
+			name: parsedInput.orgName,
+			slug: slugify(parsedInput.orgName),
+			userId: ctx.user.id,
+			metadata: {
+				size: parsedInput.orgSize,
+				industry: parsedInput.industry,
+				timezone: parsedInput.timezone,
+			},
 		});
 
-		if (!defaultOrg.data) {
-			return { success: false, error: defaultOrg?.message ?? 'UNKNOWN_ERROR' };
+		if (!org.data) {
+			throw new Error(org.serverError);
 		}
 
-		await db.update(sessionTable).set({
-			activeOrganizationId: defaultOrg.data?.id,
-		});
+		// await auth.api.setActiveOrganization({
+		// 	body: { organizationId: org.data.id },
+		// 	headers: ctx.headers,
+		// });
 
-		return { success: true, data: { ok: true } };
-	} catch (e: any) {
-		return { success: false, error: e?.message ?? 'UNKNOWN_ERROR' };
-	}
-}
+		await db
+			.update(sessionTbl)
+			.set({ activeOrganizationId: org.data.id })
+			.where(eq(sessionTbl.userId, ctx.session.userId));
 
-export async function defaultSetup(userId: string): Promise<ActionResult<{ ok: true }>> {
-	await db.update(user).set({ hasOnboarded: true }).where(eq(user.id, userId));
-	const defaultOrg = await createOrganization({
+		return { ok: true as const };
+	});
+
+export const skipOnboarding = authActionClient.metadata({ actionName: 'skipOnboarding' }).action(async ({ ctx }) => {
+	const org = await createOrganization({
 		name: 'Default Org',
-		userId: userId,
 		slug: 'default-org',
+		userId: ctx.session.userId,
+	});
+	if (!org.data) throw new Error(org.serverError ?? 'ORG_CREATE_FAILED');
+
+	await db.update(userTbl).set({ hasOnboarded: true }).where(eq(userTbl.id, ctx.session.userId));
+
+	await auth.api.setActiveOrganization({
+		body: { organizationId: org.data.id },
+		headers: ctx.headers,
 	});
 
-	if (!defaultOrg.data) {
-    console.log(defaultOrg.error)
-		return { success: false, error: defaultOrg?.message ?? 'UNKNOWN_ERROR' };
-	}
+	await db
+		.update(sessionTbl)
+		.set({ activeOrganizationId: org.data.id })
+		.where(eq(sessionTbl.userId, ctx.session.userId));
 
-	await db.update(sessionTable).set({
-		activeOrganizationId: defaultOrg.data?.id,
-	});
-
-	return {
-		success: true,
-		data: { ok: true },
-	};
-}
+	return { ok: true as const };
+});

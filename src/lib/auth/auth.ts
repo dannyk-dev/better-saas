@@ -7,8 +7,6 @@ import { admin as adminPlugin, apiKey, memberSchema, organization } from 'better
 
 import { createAuthMiddleware } from 'better-auth/api';
 import { Resend } from 'resend';
-import { completeOnboarding, defaultSetup } from '@/server/actions/onboarding-actions';
-import { createOrganization } from '@/server/actions/org-actions';
 import { eq } from 'drizzle-orm';
 import { member } from '@/server/db/schema';
 
@@ -56,24 +54,21 @@ export const auth = betterAuth({
 		session: {
 			create: {
 				before: async (session) => {
-					const memberQuery = await db
-						.select()
-						.from(member)
-						.where(eq(member.userId, session.id ?? ''))
-						.limit(1)
-						.execute();
+					const memberQuery = await db.query.member.findFirst({
+						where: (member, { eq }) => eq(member.userId, session.userId),
+					});
 
+          console.log(memberQuery);
 					return {
 						data: {
 							...session,
-							...(memberQuery[0]?.organizationId && { activeOrganizationId: memberQuery[0].organizationId }),
+							...(memberQuery && { activeOrganizationId: memberQuery.organizationId }),
 						},
 					};
 				},
 			},
 		},
 	},
-
 
 	socialProviders: {
 		github: { clientId: env.GITHUB_CLIENT_ID, clientSecret: env.GITHUB_CLIENT_SECRET },

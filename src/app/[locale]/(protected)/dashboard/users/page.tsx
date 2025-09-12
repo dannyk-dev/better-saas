@@ -7,7 +7,8 @@ import { useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { Users, UserCheck, UserPlus, CreditCard } from 'lucide-react';
-import { Card, CardBody as CardContent, CardBody as CardDescription, CardHeader, CardHeader as CardTitle } from '@heroui/react';
+import { Card, CardBody as CardContent, CardHeader,  } from '@heroui/react';
+import { CardTitle, CardDescription } from '@/components/ui';
 
 export default function UsersPage() {
   const t = useTranslations('sidebar');
@@ -39,13 +40,13 @@ export default function UsersPage() {
       <div className="space-y-6">
         <div>
           <h1 className="font-bold text-3xl tracking-tight">{t('users')}</h1>
-          <p className="text-muted-foreground">管理系统用户和权限</p>
+          <p className="text-muted-foreground">Manage your users</p>
         </div>
 
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="font-medium text-sm">总用户数</CardTitle>
+              <CardTitle className="font-medium text-sm">Total Users</CardTitle>
               <Users className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
@@ -61,7 +62,7 @@ export default function UsersPage() {
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="font-medium text-sm">活跃用户</CardTitle>
+              <CardTitle className="font-medium text-sm">Active Users</CardTitle>
               <UserCheck className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>

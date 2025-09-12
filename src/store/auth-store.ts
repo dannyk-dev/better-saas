@@ -175,7 +175,7 @@ export const useAuthStore = create<AuthState>()(
                 lastUpdated: Date.now(),
               });
 
-              await client.credits.initializeForUser({ userId: user.id });
+              await initializeUserCredits(user.id);
               return { success: true };
             }
             set({ isLoading: false });
@@ -311,7 +311,7 @@ export const useAuthStore = create<AuthState>()(
         initialize: async () => {
           if (get().isInitialized) return;
 
-          set({ isLoading: true });
+          // set({ isLoading: true });
           const previousUser = get().user;
 
           try {

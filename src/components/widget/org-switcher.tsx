@@ -7,8 +7,8 @@ import { useState } from 'react';
 import { authClient } from '@/lib/auth/auth-client';
 
 export default function OrgSidebarSwitcher() {
-	const { activeOrg, setActive, refresh, isLoadingActive } = useOrg();
-	const [activeOrgId, setActiveOrgId] = useState(activeOrg?.id); // optimistic
+	const { activeOrg, setActive, isLoadingActive } = useOrg();
+	const [activeOrgId, setActiveOrgId] = useState(activeOrg?.id);
 	const { data: orgs, isPending } = authClient.useListOrganizations();
 
 	if (!orgs) {
